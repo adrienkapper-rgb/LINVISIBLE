@@ -6,11 +6,12 @@ import { getOrderByNumber, getOrderItems } from "@/lib/api/orders";
 import { notFound } from "next/navigation";
 
 interface ConfirmationPageProps {
-  searchParams: { order?: string };
+  searchParams: Promise<{ order?: string }>;
 }
 
 export default async function ConfirmationPage({ searchParams }: ConfirmationPageProps) {
-  const orderNumber = searchParams.order;
+  const params = await searchParams;
+  const orderNumber = params.order;
   
   if (!orderNumber) {
     notFound();

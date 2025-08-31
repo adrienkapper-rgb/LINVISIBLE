@@ -4,7 +4,7 @@ import { updateOrderStatus, getOrderByNumber, getOrderItems } from '@/lib/api/or
 import { sendPaymentConfirmationEmail, sendAdminNotificationEmail } from '@/lib/email/edge-functions'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia'
+  apiVersion: '2025-08-27.basil'
 })
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!

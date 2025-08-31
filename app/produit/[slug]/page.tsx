@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import { getProductBySlug, getProducts, getProductImageUrl } from "@/lib/api/products";
 import ProductDetails from "./ProductDetails";
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const product = await getProductBySlug(params.slug);
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
   
   if (!product) {
     notFound();

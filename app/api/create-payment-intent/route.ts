@@ -4,7 +4,7 @@ import { createOrder } from '@/lib/api/orders'
 import { createClient } from '@/lib/supabase/server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia'
+  apiVersion: '2025-08-27.basil'
 })
 
 // Cache des idempotency keys pour éviter les duplications
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
           pi => pi.metadata.orderId === recentOrders[0].id
         );
         
-        if (existingIntent) {
+        if (existingIntent && existingIntent.client_secret) {
           const result = {
             clientSecret: existingIntent.client_secret,
             orderId: recentOrders[0].id,
@@ -118,13 +118,13 @@ export async function POST(request: NextRequest) {
     })
 
     const result = {
-      clientSecret: paymentIntent.client_secret,
+      clientSecret: paymentIntent.client_secret!,
       orderId: order.id,
       orderNumber: order.order_number
     };
 
     // Mettre en cache le résultat avec la clé d'idempotence
-    if (idempotencyKey) {
+    if (idempotencyKey && paymentIntent.client_secret) {
       processedKeys.set(idempotencyKey, result);
       
       // Nettoyer le cache après 5 minutes
