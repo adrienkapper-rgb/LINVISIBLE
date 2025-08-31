@@ -125,14 +125,23 @@ export default function CartPage() {
                   <span>{subtotal.toFixed(2)}€</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>
-                    {items.length > 0 
-                      ? `${shippingInfo.service === 'point-relais' ? 'Point Relais' : 'Livraison à domicile'} (${shippingInfo.formattedWeight})`
-                      : 'Livraison'
-                    }
+                  <span className="text-muted-foreground">
+                    Livraison estimée (France)
                   </span>
-                  <span>{shippingCost.toFixed(2)}€</span>
+                  <span className="text-muted-foreground">{shippingCost.toFixed(2)}€</span>
                 </div>
+                {items.length > 0 && shippingInfo.packageCount > 1 && (
+                  <div className="text-sm text-muted-foreground">
+                    Frais détaillés : {shippingInfo.packages.map((pkg, index) => 
+                      `${(pkg.weight / 1000).toFixed(1)}kg (${pkg.cost.toFixed(2)}€)`
+                    ).join(' + ')}
+                  </div>
+                )}
+                {items.length > 0 && (
+                  <div className="text-xs text-muted-foreground italic">
+                    Les frais définitifs seront calculés selon votre destination
+                  </div>
+                )}
               </div>
               
               <Separator />

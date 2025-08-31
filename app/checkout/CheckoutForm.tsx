@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/lib/store";
 import { StripePayment } from "@/components/StripePayment";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Package, CreditCard, AlertCircle, Globe } from "lucide-react";
+import { MapPin, Package, CreditCard, AlertCircle, Globe, Edit2, Save } from "lucide-react";
 import { saveUserInfo } from "@/app/actions/user";
 import { MondialRelayWidget } from "@/components/MondialRelayWidget";
 import { calculateTotalWeight, getShippingInfo, validatePackageWeight, SUPPORTED_COUNTRIES, getAvailableServices } from "@/lib/shipping/mondial-relay-pricing";
@@ -25,6 +25,10 @@ interface CheckoutFormProps {
     firstName?: string;
     lastName?: string;
     phone?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    countryCode?: string;
   } | null;
 }
 
@@ -36,22 +40,44 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [createAccount, setCreateAccount] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  
   
   const [formData, setFormData] = useState({
     email: user?.email || "",
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     phone: user?.phone || "",
-    address: "",
-    city: "",
-    postalCode: "",
-    country: "FR", // Code pays par défaut
+    address: user?.address || "",
+    city: user?.city || "",
+    postalCode: user?.postalCode || "",
+    country: user?.countryCode || "FR",
     mondialRelayPoint: "",
   });
   
   const [selectedRelayPoint, setSelectedRelayPoint] = useState<any>(null);
-  const [selectedCountry, setSelectedCountry] = useState('FR');
+  const [selectedCountry, setSelectedCountry] = useState((user?.countryCode || 'FR').toUpperCase());
   const [preferPointRelais, setPreferPointRelais] = useState(true);
+
+  // Mettre à jour automatiquement les champs si les données utilisateur changent
+  useEffect(() => {
+    if (user) {
+      setFormData(prevData => ({
+        ...prevData,
+        email: user.email || prevData.email,
+        firstName: user.firstName || prevData.firstName,
+        lastName: user.lastName || prevData.lastName,
+        phone: user.phone || prevData.phone,
+        address: user.address || prevData.address,
+        city: user.city || prevData.city,
+        postalCode: user.postalCode || prevData.postalCode,
+        country: user.countryCode || prevData.country,
+      }));
+      if (user.countryCode) {
+        setSelectedCountry(user.countryCode.toUpperCase());
+      }
+    }
+  }, [user]);
 
   // Obtenir les services disponibles pour le pays sélectionné
   const availableServices = getAvailableServices(selectedCountry);
@@ -98,25 +124,42 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
       return;
     }
 
-    // Vérifier l'adresse de livraison si mode livraison à domicile
-    if (!preferPointRelais || !availableServices.pointRelais) {
-      if (!formData.address.trim() || !formData.postalCode.trim() || !formData.city.trim()) {
-        toast({
-          title: "Erreur",
-          description: "Veuillez renseigner l'adresse de livraison complète",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Vérifier que toutes les informations de contact sont remplies
+    if (!formData.address.trim() || !formData.postalCode.trim() || !formData.city.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez renseigner une adresse complète dans vos informations de contact",
+        variant: "destructive",
+      });
+      return;
     }
 
     // Sauvegarder les infos utilisateur si connecté
     if (user) {
-      await saveUserInfo({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-      });
+      try {
+        const saveData: any = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          countryCode: selectedCountry,
+        };
+
+        const result = await saveUserInfo(saveData);
+        
+        if (result.error) {
+          console.error('Erreur sauvegarde utilisateur:', result.error);
+          toast({
+            title: "Avertissement",
+            description: "Les informations de contact n'ont pas pu être sauvegardées pour les prochaines commandes.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Erreur sauvegarde utilisateur:', error);
+      }
     }
 
     setShowPayment(true);
@@ -140,6 +183,38 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleSaveInfo = async () => {
+    if (!user) return;
+    
+    try {
+      const result = await saveUserInfo({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        countryCode: selectedCountry,
+      });
+      
+      if (result.error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de sauvegarder vos informations",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Succès",
+          description: "Vos informations ont été mises à jour",
+        });
+        setIsEditingInfo(false);
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde:', error);
+    }
   };
 
   const handleCountryChange = (countryCode: string) => {
@@ -201,13 +276,36 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
             {/* Contact Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Informations de contact
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Informations de contact
+                  </div>
+                  {user && (
+                    <Button
+                      type="button"
+                      variant={isEditingInfo ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => isEditingInfo ? handleSaveInfo() : setIsEditingInfo(true)}
+                    >
+                      {isEditingInfo ? (
+                        <>
+                          <Save className="h-4 w-4 mr-1" />
+                          Enregistrer
+                        </>
+                      ) : (
+                        <>
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Modifier
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
+                  {/* Email */}
                   <div>
                     <Label htmlFor="email">Email *</Label>
                     <Input
@@ -220,6 +318,8 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                       required
                     />
                   </div>
+
+                  {/* Prénom et Nom */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="firstName">Prénom *</Label>
@@ -228,6 +328,8 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
+                        disabled={user && !isEditingInfo}
+                        placeholder="Votre prénom"
                         required
                       />
                     </div>
@@ -238,10 +340,14 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
+                        disabled={user && !isEditingInfo}
+                        placeholder="Votre nom"
                         required
                       />
                     </div>
                   </div>
+
+                  {/* Téléphone */}
                   <div>
                     <Label htmlFor="phone">Téléphone *</Label>
                     <Input
@@ -250,8 +356,73 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                       type="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
+                      disabled={user && !isEditingInfo}
+                      placeholder="Votre numéro de téléphone"
                       required
                     />
+                  </div>
+
+                  {/* Adresse */}
+                  <div>
+                    <Label htmlFor="address">Adresse *</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      disabled={user && !isEditingInfo}
+                      placeholder="Numéro et nom de rue"
+                      required
+                    />
+                  </div>
+
+                  {/* Code postal et Ville */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="postalCode">Code postal *</Label>
+                      <Input
+                        id="postalCode"
+                        name="postalCode"
+                        value={formData.postalCode}
+                        onChange={handleInputChange}
+                        disabled={user && !isEditingInfo}
+                        placeholder="Code postal"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">Ville *</Label>
+                      <Input
+                        id="city"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        disabled={user && !isEditingInfo}
+                        placeholder="Ville"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pays */}
+                  <div>
+                    <Label htmlFor="country">Pays *</Label>
+                    <Select 
+                      value={selectedCountry} 
+                      onValueChange={handleCountryChange}
+                      disabled={user && !isEditingInfo}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez un pays" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(SUPPORTED_COUNTRIES).map((country) => (
+                          <SelectItem key={country.code} value={country.code}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>
@@ -262,29 +433,10 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  Livraison
+                  Mode de livraison
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Country Selection */}
-                <div>
-                  <Label htmlFor="country" className="flex items-center gap-2 mb-3">
-                    <Globe className="h-4 w-4" />
-                    Pays de livraison *
-                  </Label>
-                  <Select value={selectedCountry} onValueChange={handleCountryChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez un pays" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(SUPPORTED_COUNTRIES).map((country) => (
-                        <SelectItem key={country.code} value={country.code}>
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 {/* Service Selection */}
                 {availableServices.pointRelais && availableServices.homeDelivery && (
@@ -349,42 +501,12 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                   />
                 )}
 
-                {/* Adresse de livraison si livraison à domicile */}
+                {/* Info si livraison à domicile */}
                 {(!availableServices.pointRelais || !preferPointRelais) && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="address">Adresse de livraison *</Label>
-                      <Input
-                        id="address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        placeholder="Numéro et nom de rue"
-                        required
-                      />
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="postalCode">Code postal *</Label>
-                        <Input
-                          id="postalCode"
-                          name="postalCode"
-                          value={formData.postalCode}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="city">Ville *</Label>
-                        <Input
-                          id="city"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      La livraison sera effectuée à l'adresse indiquée dans vos informations de contact.
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -473,11 +595,9 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                         mondialRelayPoint: formData.mondialRelayPoint
                       }),
                       deliveryType: (preferPointRelais && availableServices.pointRelais) ? 'point-relais' : 'domicile',
-                      ...(!preferPointRelais || !availableServices.pointRelais ? {
-                        deliveryAddress: formData.address,
-                        deliveryPostalCode: formData.postalCode,
-                        deliveryCity: formData.city
-                      } : {}),
+                      deliveryAddress: formData.address,
+                      deliveryPostalCode: formData.postalCode,
+                      deliveryCity: formData.city,
                       deliveryCountry: selectedCountry || 'FR',
                       items: items.map(item => ({
                         productId: item.product.id,

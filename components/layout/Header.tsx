@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/store";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ export function Header() {
   const items = useCart((state) => state.items);
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   const { user, signOut } = useAuth();
+  const { displayName } = useProfile();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -41,9 +43,6 @@ export function Header() {
           <Link href="/boutique" className="text-sm font-medium transition-colors hover:text-primary">
             Boutique
           </Link>
-          <Link href="/about" className="text-sm font-medium transition-colors hover:text-primary">
-            À propos
-          </Link>
           <Link href="/contact" className="text-sm font-medium transition-colors hover:text-primary">
             Contact
           </Link>
@@ -53,7 +52,7 @@ export function Header() {
           {user ? (
             <>
               <span className="text-sm text-muted-foreground hidden md:inline">
-                Bonjour {user.email}
+                Bonjour {displayName}
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

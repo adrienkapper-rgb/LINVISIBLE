@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { updateOrderStatus, getOrderByNumber, getOrderItems } from '@/lib/api/orders'
-import { sendPaymentConfirmationEmail, sendAdminNotificationEmail } from '@/lib/email/edge-functions'
+// Emails are now sent at order creation, not via webhook
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil'
@@ -40,21 +40,8 @@ export async function POST(request: NextRequest) {
           await updateOrderStatus(orderId, 'processing', paymentIntent.id)
           console.log(`✅ Commande ${orderId} marquée comme payée`)
           
-          // Send payment confirmation and admin notification emails
-          try {
-            const order = await getOrderByNumber(paymentIntent.metadata.orderNumber || '')
-            if (order) {
-              const orderItems = await getOrderItems(order.id)
-              
-              // Send payment confirmation to customer
-              await sendPaymentConfirmationEmail({ order, orderItems })
-              
-              // Send notification to admin
-              await sendAdminNotificationEmail({ order, orderItems })
-            }
-          } catch (emailError) {
-            console.error('Erreur envoi emails paiement:', emailError)
-          }
+          // Emails are sent at order creation, no need to send them here
+          console.log(`💳 Paiement confirmé pour commande ${paymentIntent.metadata.orderNumber}`)
         }
         break
       }

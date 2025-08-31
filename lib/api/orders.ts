@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/types'
-import { sendOrderConfirmationEmail, sendShippingNotificationEmail, sendDeliveryNotificationEmail } from '@/lib/email/edge-functions'
+import { sendOrderConfirmationEmail, sendAdminNotificationEmail, sendShippingNotificationEmail, sendDeliveryNotificationEmail } from '@/lib/email/service'
 
 export type Order = Database['public']['Tables']['orders']['Row']
 export type OrderItem = Database['public']['Tables']['order_items']['Row']
@@ -92,7 +92,7 @@ export async function createOrder(orderData: CreateOrderData): Promise<{ order: 
       })
   }
   
-  // Send order confirmation email
+  // Envoyer les emails de confirmation immédiatement à la création de commande
   try {
     const orderItems = orderData.items.map(item => ({
       id: '', // Not needed for email
@@ -105,10 +105,17 @@ export async function createOrder(orderData: CreateOrderData): Promise<{ order: 
       created_at: new Date().toISOString()
     }))
     
+    // Email de confirmation au client
     await sendOrderConfirmationEmail({ order, orderItems })
+    console.log(`✅ Email confirmation envoyé pour commande ${order.order_number}`)
+    
+    // Email de notification à l'admin
+    await sendAdminNotificationEmail({ order, orderItems })
+    console.log(`✅ Email notification admin envoyé pour commande ${order.order_number}`)
+    
   } catch (emailError) {
-    console.error('Erreur envoi email confirmation:', emailError)
-    // Don't fail the order creation if email fails
+    console.error('❌ Erreur envoi emails:', emailError)
+    // Ne pas faire échouer la création de commande si les emails échouent
   }
   
   return { order, error: null }

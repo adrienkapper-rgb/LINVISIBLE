@@ -177,8 +177,69 @@ export function calculateTotalWeight(items: CartItem[]): number {
   }, 0);
 }
 
-export function calculateShippingCost(
+interface PackageInfo {
+  weight: number;
+  cost: number;
+}
+
+interface MultiPackageResult {
+  packages: PackageInfo[];
+  totalCost: number;
+  totalWeight: number;
+  packageCount: number;
+}
+
+function calculateMultiPackageShipping(
   totalWeightInGrams: number, 
+  countryCode: string = 'FR', 
+  preferPointRelais: boolean = true
+): MultiPackageResult {
+  const country = SUPPORTED_COUNTRIES[countryCode];
+  if (!country) {
+    throw new Error(`Pays non supporté: ${countryCode}`);
+  }
+
+  // Ajouter 100g pour l'emballage au total
+  const packageWeight = totalWeightInGrams + 100;
+  
+  // Si le poids est dans les limites, utiliser un seul colis
+  if (packageWeight <= country.maxWeight) {
+    const cost = calculateSinglePackageCost(packageWeight, countryCode, preferPointRelais);
+    return {
+      packages: [{ weight: packageWeight, cost }],
+      totalCost: cost,
+      totalWeight: packageWeight,
+      packageCount: 1
+    };
+  }
+
+  // Diviser en plusieurs colis
+  const maxPackageWeight = country.maxWeight;
+  const packages: PackageInfo[] = [];
+  let remainingWeight = packageWeight;
+
+  while (remainingWeight > 0) {
+    const currentPackageWeight = Math.min(remainingWeight, maxPackageWeight);
+    const cost = calculateSinglePackageCost(currentPackageWeight, countryCode, preferPointRelais);
+    
+    packages.push({
+      weight: currentPackageWeight,
+      cost
+    });
+    
+    remainingWeight -= currentPackageWeight;
+  }
+
+  return {
+    packages,
+    totalCost: packages.reduce((sum, pkg) => sum + pkg.cost, 0),
+    totalWeight: packageWeight,
+    packageCount: packages.length
+  };
+}
+
+function calculateSinglePackageCost(
+  packageWeightInGrams: number, 
   countryCode: string = 'FR', 
   preferPointRelais: boolean = true
 ): number {
@@ -186,9 +247,6 @@ export function calculateShippingCost(
   if (!country) {
     throw new Error(`Pays non supporté: ${countryCode}`);
   }
-
-  // Ajouter 100g pour l'emballage
-  const packageWeight = totalWeightInGrams + 100;
   
   // Déterminer le service et les tarifs à utiliser
   let rates: ShippingRate[];
@@ -202,19 +260,24 @@ export function calculateShippingCost(
   
   // Trouver la tranche tarifaire correspondante
   const rate = rates.find(rate => 
-    packageWeight >= rate.minWeight && packageWeight <= rate.maxWeight
+    packageWeightInGrams >= rate.minWeight && packageWeightInGrams <= rate.maxWeight
   );
   
-  // Vérifier les limites de poids
   if (!rate) {
-    if (packageWeight > country.maxWeight) {
-      throw new Error(`Le colis dépasse le poids maximum autorisé de ${country.maxWeight/1000}kg pour ${country.name}`);
-    }
     // Pour les poids très légers non couverts, utiliser le premier tarif
     return rates[0].price;
   }
   
   return rate.price;
+}
+
+export function calculateShippingCost(
+  totalWeightInGrams: number, 
+  countryCode: string = 'FR', 
+  preferPointRelais: boolean = true
+): number {
+  const result = calculateMultiPackageShipping(totalWeightInGrams, countryCode, preferPointRelais);
+  return result.totalCost;
 }
 
 export function getShippingInfo(
@@ -228,27 +291,39 @@ export function getShippingInfo(
   service: 'point-relais' | 'domicile';
   deliveryTime: string;
   country: CountryShippingConfig;
+  packages: PackageInfo[];
+  packageCount: number;
+  packageDetails: string;
 } {
   const country = SUPPORTED_COUNTRIES[countryCode];
   if (!country) {
     throw new Error(`Pays non supporté: ${countryCode}`);
   }
 
-  const packageWeight = totalWeightInGrams + 100; // Ajout emballage
-  const cost = calculateShippingCost(totalWeightInGrams, countryCode, preferPointRelais);
+  const multiPackageResult = calculateMultiPackageShipping(totalWeightInGrams, countryCode, preferPointRelais);
   
   // Déterminer le service utilisé
   const service = (preferPointRelais && country.pointRelaisAvailable) ? 'point-relais' : 'domicile';
   
+  // Créer une description détaillée des colis
+  const packageDetails = multiPackageResult.packageCount > 1 
+    ? `${multiPackageResult.packageCount} colis (${multiPackageResult.packages.map(pkg => 
+        `${(pkg.weight / 1000).toFixed(1)}kg`
+      ).join(' + ')})`
+    : `1 colis (${(multiPackageResult.totalWeight / 1000).toFixed(1)}kg)`;
+  
   return {
-    weight: packageWeight,
-    cost: cost,
-    formattedWeight: packageWeight >= 1000 
-      ? `${(packageWeight / 1000).toFixed(1)} kg`
-      : `${packageWeight} g`,
+    weight: multiPackageResult.totalWeight,
+    cost: multiPackageResult.totalCost,
+    formattedWeight: multiPackageResult.totalWeight >= 1000 
+      ? `${(multiPackageResult.totalWeight / 1000).toFixed(1)} kg`
+      : `${multiPackageResult.totalWeight} g`,
     service,
     deliveryTime: country.deliveryTime,
-    country
+    country,
+    packages: multiPackageResult.packages,
+    packageCount: multiPackageResult.packageCount,
+    packageDetails
   };
 }
 
@@ -269,13 +344,6 @@ export function validatePackageWeight(
 
   const packageWeight = totalWeightInGrams + 100;
   
-  if (packageWeight > country.maxWeight) {
-    return {
-      isValid: false,
-      error: `Le colis dépasse le poids maximum autorisé de ${country.maxWeight/1000}kg pour la livraison vers ${country.name}`
-    };
-  }
-  
   if (packageWeight <= 0) {
     return {
       isValid: false,
@@ -283,6 +351,7 @@ export function validatePackageWeight(
     };
   }
   
+  // Plus de limite de poids maximum - on divise automatiquement en plusieurs colis
   return { isValid: true };
 }
 

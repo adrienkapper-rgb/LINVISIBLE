@@ -1,6 +1,62 @@
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string
+          email: string
+          first_name: string
+          last_name: string
+          phone: string | null
+          account_type: 'particulier' | 'professionnel' | null
+          company_name: string | null
+          country: string
+          address_formatted: string
+          address_street: string | null
+          address_housenumber: string | null
+          postcode: string
+          city: string
+          country_code: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          first_name: string
+          last_name: string
+          phone?: string | null
+          account_type?: 'particulier' | 'professionnel' | null
+          company_name?: string | null
+          country: string
+          address_formatted: string
+          address_street?: string | null
+          address_housenumber?: string | null
+          postcode: string
+          city: string
+          country_code: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          first_name?: string
+          last_name?: string
+          phone?: string | null
+          account_type?: 'particulier' | 'professionnel' | null
+          company_name?: string | null
+          country?: string
+          address_formatted?: string
+          address_street?: string | null
+          address_housenumber?: string | null
+          postcode?: string
+          city?: string
+          country_code?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       products: {
         Row: {
           id: string

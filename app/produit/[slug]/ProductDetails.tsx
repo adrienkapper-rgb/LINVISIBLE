@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useCart } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingCart, ChevronLeft, Wine, Droplets, FlaskConical } from "lucide-react";
@@ -48,11 +49,43 @@ interface ProductDetailsProps {
 
 export default function ProductDetails({ product, otherProducts }: ProductDetailsProps) {
   const [quantity, setQuantity] = useState("1");
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customQuantity, setCustomQuantity] = useState("");
   const addItem = useCart((state) => state.addItem);
   const { toast } = useToast();
 
+  const handleQuantityChange = (value: string) => {
+    if (value === "custom") {
+      setShowCustomInput(true);
+      setCustomQuantity("");
+    } else {
+      setShowCustomInput(false);
+      setQuantity(value);
+    }
+  };
+
+  const handleCustomQuantityChange = (value: string) => {
+    const numValue = parseInt(value);
+    if (value === "" || (numValue >= 1 && numValue <= 999)) {
+      setCustomQuantity(value);
+      if (numValue >= 1) {
+        setQuantity(value);
+      }
+    }
+  };
+
+  const getCurrentQuantity = () => {
+    return showCustomInput ? customQuantity : quantity;
+  };
+
+  const getValidQuantity = () => {
+    const current = getCurrentQuantity();
+    const num = parseInt(current);
+    return isNaN(num) || num < 1 ? 1 : num;
+  };
+
   const handleAddToCart = () => {
-    const qty = parseInt(quantity);
+    const qty = getValidQuantity();
     addItem(product, qty);
     toast({
       title: "Ajouté au panier",
@@ -106,8 +139,7 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
 
           {/* Ingredients */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <FlaskConical className="h-5 w-5" />
+            <h3 className="text-lg font-semibold mb-3">
               Composition
             </h3>
             <ul className="space-y-2">
@@ -123,8 +155,7 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
           {/* Serving Instructions */}
           {product.serving_instructions && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Wine className="h-5 w-5" />
+              <h3 className="text-lg font-semibold mb-3">
                 Comment servir
               </h3>
               <p className="text-muted-foreground">{product.serving_instructions}</p>
@@ -142,18 +173,31 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
               </div>
               <div className="w-32">
                 <label className="text-sm text-muted-foreground mb-2 block">Quantité</label>
-                <Select value={quantity} onValueChange={setQuantity}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 12].map((num) => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num} bouteille{num > 1 ? 's' : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {showCustomInput ? (
+                  <Input
+                    type="number"
+                    value={customQuantity}
+                    onChange={(e) => handleCustomQuantityChange(e.target.value)}
+                    placeholder="Quantité"
+                    min="1"
+                    max="999"
+                    autoFocus
+                  />
+                ) : (
+                  <Select value={quantity} onValueChange={handleQuantityChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} bouteille{num > 1 ? 's' : ''}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="custom">+ Autre quantité</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
@@ -164,7 +208,7 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
               disabled={!product.available}
             >
               <ShoppingCart className="h-5 w-5" />
-              Ajouter au panier - {(product.price * parseInt(quantity)).toFixed(2)}€
+              Ajouter au panier - {(product.price * getValidQuantity()).toFixed(2)}€
             </Button>
 
             {!product.available && (
@@ -174,15 +218,6 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
             )}
           </div>
 
-          {/* Additional Info */}
-          <Card className="mt-6 bg-muted/40">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Droplets className="h-4 w-4" />
-                <span>L'abus d'alcool est dangereux pour la santé. À consommer avec modération.</span>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 
