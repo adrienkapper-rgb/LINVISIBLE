@@ -30,6 +30,9 @@ interface CreateOrderData {
 export async function createOrder(orderData: CreateOrderData): Promise<{ order: Order | null, error: any }> {
   const supabase = await createClient()
   
+  // Get the authenticated user to link the order
+  const { data: { user } } = await supabase.auth.getUser()
+  
   // Generate order number
   const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
   
@@ -38,6 +41,7 @@ export async function createOrder(orderData: CreateOrderData): Promise<{ order: 
     .from('orders')
     .insert({
       order_number: orderNumber,
+      customer_id: user?.id || null, // Associate with logged in user if available
       email: orderData.email,
       first_name: orderData.firstName,
       last_name: orderData.lastName,

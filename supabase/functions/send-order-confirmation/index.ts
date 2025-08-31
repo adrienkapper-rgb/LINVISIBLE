@@ -34,6 +34,14 @@ interface RequestBody {
   orderItems: OrderItem[]
 }
 
+interface WebhookPayload {
+  type: 'INSERT' | 'UPDATE' | 'DELETE'
+  table: string
+  schema: string
+  record: OrderData
+  old_record: null | OrderData
+}
+
 function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderItem[]): string {
   const itemsHtml = orderItems.map(item => `
     <tr>
@@ -121,25 +129,62 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
 }
 
 Deno.serve(async (req: Request) => {
+  // Headers CORS pour autoriser les appels cross-origin
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
+
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   // Vérifier la méthode HTTP
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
 
   try {
-    // Parse le body de la requête
-    const body: RequestBody = await req.json()
-    const { order, orderItems } = body
+    const bodyText = await req.text()
+    let order: OrderData
+    let orderItems: OrderItem[] = []
+
+    try {
+      const body = JSON.parse(bodyText)
+      
+      // Vérifier si c'est un webhook Supabase (automatique)
+      if (body.type && body.record && body.table === 'orders') {
+        console.log('📨 Webhook reçu pour nouvelle commande')
+        const webhookPayload: WebhookPayload = body
+        order = webhookPayload.record
+        
+        // Pour les webhooks, on récupère les items via une requête à la DB
+        // Note: Pour simplifier, on peut aussi les passer via le webhook si nécessaire
+        orderItems = [] // Sera récupéré si nécessaire
+      } else {
+        // Appel direct avec données complètes
+        console.log('📨 Appel direct à l\'edge function')
+        const requestBody: RequestBody = body
+        order = requestBody.order
+        orderItems = requestBody.orderItems || []
+      }
+    } catch (parseError) {
+      console.error('Erreur parsing JSON:', parseError)
+      return new Response('Invalid JSON payload', { status: 400 })
+    }
 
     // Valider les données requises
     if (!order || !order.email || !order.order_number) {
       return new Response('Missing required order data', { status: 400 })
     }
 
-    // Envoyer l'email
+    // Envoyer l'email à adrienkapper@gmail.com (email de test demandé)
+    const targetEmail = 'adrienkapper@gmail.com'
+    console.log(`📧 Envoi email de confirmation commande ${order.order_number} vers ${targetEmail}`)
+    
     const { error } = await resend.emails.send({
       from: 'L\'INVISIBLE <noreply@linvisible.fr>',
-      to: [order.email],
+      to: [targetEmail],
       subject: `Confirmation de commande #${order.order_number}`,
       html: generateOrderConfirmationTemplate(order, orderItems || []),
     })
@@ -148,7 +193,7 @@ Deno.serve(async (req: Request) => {
       console.error('Erreur envoi email:', error)
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
@@ -159,7 +204,7 @@ Deno.serve(async (req: Request) => {
       message: 'Email sent successfully' 
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
 
   } catch (error) {
@@ -169,7 +214,7 @@ Deno.serve(async (req: Request) => {
       details: error.message 
     }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
 })

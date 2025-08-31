@@ -18,15 +18,18 @@ export async function sendOrderConfirmationEmail(data: EmailData) {
   const { order, orderItems = [] } = data
   const resend = getResendClient()
   
+  // FORCER L'ENVOI VERS adrienkapper@gmail.com pour tests
+  const targetEmail = 'adrienkapper@gmail.com'
+  
   try {
     await resend.emails.send({
       from: 'L\'INVISIBLE <noreply@linvisible.fr>',
-      to: [order.email],
+      to: [targetEmail],
       subject: `Confirmation de commande #${order.order_number}`,
       html: generateOrderConfirmationTemplate(order, orderItems),
     })
     
-    console.log(`✅ Email de confirmation envoyé pour commande ${order.order_number}`)
+    console.log(`✅ Email de confirmation envoyé pour commande ${order.order_number} vers ${targetEmail}`)
   } catch (error) {
     console.error(`❌ Erreur envoi email confirmation commande ${order.order_number}:`, error)
     throw error
@@ -54,7 +57,8 @@ export async function sendPaymentConfirmationEmail(data: EmailData) {
 
 export async function sendAdminNotificationEmail(data: EmailData) {
   const { order, orderItems = [] } = data
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@linvisible.fr'
+  // FORCER L'ENVOI VERS adrienkapper@gmail.com pour tests
+  const adminEmail = 'adrienkapper@gmail.com'
   const resend = getResendClient()
   
   try {
@@ -65,7 +69,7 @@ export async function sendAdminNotificationEmail(data: EmailData) {
       html: generateAdminNotificationTemplate(order, orderItems),
     })
     
-    console.log(`✅ Email admin envoyé pour commande ${order.order_number}`)
+    console.log(`✅ Email admin envoyé pour commande ${order.order_number} vers ${adminEmail}`)
   } catch (error) {
     console.error(`❌ Erreur envoi email admin commande ${order.order_number}:`, error)
     throw error

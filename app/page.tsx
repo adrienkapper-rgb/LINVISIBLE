@@ -47,18 +47,32 @@ export default function Home() {
       
       <div className="flex flex-col">
         {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center justify-center bg-gradient-to-b from-background to-muted/40">
-        <div className="container px-4 py-16 text-center">
-          <h1 className="text-5xl md:text-7xl font-serif mb-4">L'invisible</h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-            Atelier artisanal et éditeur de cocktails prêt à boire
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/boutique">
-              <Button size="lg" className="gap-2">
-                Découvrir nos cocktails <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+      <section className="relative min-h-[70vh] bg-gradient-to-b from-background to-muted/40">
+        {/* Image Section - Full Width */}
+        <div className="relative w-full h-[40vh] mb-8">
+          <Image
+            src="https://rnxhkjvcixumuvjfxdjo.supabase.co/storage/v1/object/public/product-images/hero-image.png"
+            alt="L'invisible - Cocktails artisanaux"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+        
+        {/* Text Section */}
+        <div className="container px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-7xl font-serif mb-4">L'invisible</h1>
+            <p className="text-xl md:text-2xl text-muted-foreground mb-8">
+              Atelier artisanal et éditeur de cocktails prêt à boire
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Link href="/boutique">
+                <Button size="lg" className="gap-2">
+                  Découvrir nos cocktails <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

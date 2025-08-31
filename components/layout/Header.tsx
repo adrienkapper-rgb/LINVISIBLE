@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, User, LogOut } from "lucide-react";
+import { ShoppingCart, User, LogOut, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/store";
@@ -64,6 +64,13 @@ export function Header() {
                   <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                   <DropdownMenuItem disabled>
                     {user.email}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/mes-commandes">
+                      <Package className="mr-2 h-4 w-4" />
+                      Mes commandes
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
