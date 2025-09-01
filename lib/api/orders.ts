@@ -100,32 +100,9 @@ export async function createOrder(orderData: CreateOrderData): Promise<{ order: 
         quantity: item.quantity
       })
   }
-  
-  // Envoyer les emails de confirmation immédiatement à la création de commande
-  try {
-    const orderItems = orderData.items.map(item => ({
-      id: '', // Not needed for email
-      order_id: order.id,
-      product_id: item.productId,
-      product_name: item.productName,
-      product_price: item.productPrice,
-      quantity: item.quantity,
-      total: item.productPrice * item.quantity,
-      created_at: new Date().toISOString()
-    }))
-    
-    // Email de confirmation au client
-    await sendOrderConfirmationEmail({ order, orderItems })
-    
-    // Email de notification à l'admin
-    await sendAdminNotificationEmail({ order, orderItems })
-    
-  } catch (emailError) {
-    console.error('Error sending emails:', emailError)
-    // Ne pas faire échouer la création de commande si les emails échouent
-  }
-  
-  return { order, error: null }
+console.log(`✅ Commande ${order.order_number} créée avec succès - les emails seront envoyés après paiement`)
+
+return { order, error: null }
   } catch (error) {
     console.error('Unexpected error in createOrder:', error)
     return { 
@@ -194,21 +171,36 @@ export async function updateOrderStatus(
   return { success: true, error: null }
 }
 
-export async function getOrderByNumber(orderNumber: string): Promise<Order | null> {
+export async function getOrderByNumber(orderNumber: string, maxRetries = 5): Promise<Order | null> {
   const supabase = await createClient()
   
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('order_number', orderNumber)
-    .single()
-  
-  if (error) {
-    console.error('Error fetching order:', error)
-    return null
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('order_number', orderNumber)
+      .single()
+    
+    if (data) {
+      console.log(`✅ Commande ${orderNumber} trouvée (tentative ${attempt}/${maxRetries})`)
+      return data
+    }
+    
+    if (error && error.code !== 'PGRST116') {
+      // Si c'est une vraie erreur (pas "no rows returned"), on arrête
+      console.error('Error fetching order:', error)
+      return null
+    }
+    
+    if (attempt < maxRetries) {
+      console.log(`🔄 Commande ${orderNumber} non trouvée, retry ${attempt}/${maxRetries} dans 2s...`)
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    } else {
+      console.log(`❌ Commande ${orderNumber} non trouvée après ${maxRetries} tentatives`)
+    }
   }
   
-  return data
+  return null
 }
 
 export async function getOrderItems(orderId: string): Promise<OrderItem[]> {

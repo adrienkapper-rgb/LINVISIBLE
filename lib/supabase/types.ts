@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export interface Database {
   public: {
     Tables: {
@@ -12,8 +20,6 @@ export interface Database {
           company_name: string | null
           country: string
           address_formatted: string
-          address_street: string | null
-          address_housenumber: string | null
           postcode: string
           city: string
           country_code: string
@@ -30,8 +36,6 @@ export interface Database {
           company_name?: string | null
           country: string
           address_formatted: string
-          address_street?: string | null
-          address_housenumber?: string | null
           postcode: string
           city: string
           country_code: string
@@ -48,13 +52,111 @@ export interface Database {
           company_name?: string | null
           country?: string
           address_formatted?: string
-          address_street?: string | null
-          address_housenumber?: string | null
           postcode?: string
           city?: string
           country_code?: string
           created_at?: string
           updated_at?: string
+        }
+      }
+      payments: {
+        Row: {
+          id: string
+          order_id: string | null
+          payment_method: string
+          provider_payment_id: string
+          amount: number
+          currency: string
+          status: string
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id?: string | null
+          payment_method?: string
+          provider_payment_id: string
+          amount: number
+          currency?: string
+          status?: string
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string | null
+          payment_method?: string
+          provider_payment_id?: string
+          amount?: number
+          currency?: string
+          status?: string
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      pending_orders: {
+        Row: {
+          id: string
+          payment_intent_id: string
+          email: string
+          first_name: string
+          last_name: string
+          phone: string
+          mondial_relay_point: string | null
+          delivery_type: string
+          delivery_address: string | null
+          delivery_postal_code: string | null
+          delivery_city: string | null
+          delivery_country: string
+          items: Json
+          subtotal: number
+          shipping_cost: number
+          total: number
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          payment_intent_id: string
+          email: string
+          first_name: string
+          last_name: string
+          phone: string
+          mondial_relay_point?: string | null
+          delivery_type: string
+          delivery_address?: string | null
+          delivery_postal_code?: string | null
+          delivery_city?: string | null
+          delivery_country?: string
+          items: Json
+          subtotal: number
+          shipping_cost: number
+          total: number
+          created_at?: string
+          expires_at?: string
+        }
+        Update: {
+          id?: string
+          payment_intent_id?: string
+          email?: string
+          first_name?: string
+          last_name?: string
+          phone?: string
+          mondial_relay_point?: string | null
+          delivery_type?: string
+          delivery_address?: string | null
+          delivery_postal_code?: string | null
+          delivery_city?: string | null
+          delivery_country?: string
+          items?: Json
+          subtotal?: number
+          shipping_cost?: number
+          total?: number
+          created_at?: string
+          expires_at?: string
         }
       }
       products: {

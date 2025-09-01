@@ -1,12 +1,30 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Package, Mail, ArrowRight } from "lucide-react";
+import { CheckCircle, Package, Mail, ArrowRight, Loader2 } from "lucide-react";
 import { getOrderByNumber, getOrderItems } from "@/lib/api/orders";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 interface ConfirmationPageProps {
   searchParams: Promise<{ order?: string }>;
+}
+
+// Composant de loading
+function LoadingConfirmation() {
+  return (
+    <div className="container px-4 py-16">
+      <div className="max-w-2xl mx-auto text-center">
+        <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin" />
+        </div>
+        <h1 className="text-3xl font-serif mb-2">Finalisation de votre commande...</h1>
+        <p className="text-muted-foreground">
+          Nous préparons votre confirmation, veuillez patienter quelques instants.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export default async function ConfirmationPage({ searchParams }: ConfirmationPageProps) {
@@ -17,11 +35,31 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
     notFound();
   }
 
-  const order = await getOrderByNumber(orderNumber);
+  // Attendre la commande avec retry automatique
+  const order = await getOrderByNumber(orderNumber, 8); // 8 tentatives = ~16 secondes max
   const orderItems = order ? await getOrderItems(order.id) : [];
   
   if (!order) {
-    notFound();
+    return (
+      <div className="container px-4 py-16">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-red-100 flex items-center justify-center">
+            <ArrowRight className="h-10 w-10 text-red-600" />
+          </div>
+          <h1 className="text-3xl font-serif mb-2">Commande en cours de traitement</h1>
+          <p className="text-muted-foreground mb-6">
+            Votre paiement a été accepté mais votre commande est encore en cours de traitement. 
+            Vous recevrez un email de confirmation dans quelques minutes.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Numéro de commande : <span className="font-mono">{orderNumber}</span>
+          </p>
+          <Link href="/">
+            <Button>Retour à l'accueil</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
   
   return (

@@ -182,19 +182,13 @@ Deno.serve(async (req: Request) => {
       return new Response('Missing required order data', { status: 400 })
     }
 
-    // Déterminer l'email cible (mode développement ou production)
-    const targetEmail = Deno.env.get('TARGET_EMAIL') || 'adrienkapper@gmail.com'
-    const isDevMode = targetEmail === 'adrienkapper@gmail.com'
-    
     console.log(`📧 Envoi email de confirmation commande ${order.order_number}`)
-    console.log(`🎯 Destinataire: ${targetEmail} ${isDevMode ? '(mode développement)' : '(mode production)'}`)
+    console.log(`🎯 Destinataire: ${order.email}`)
     
     const { data, error } = await resend.emails.send({
       from: 'L\'INVISIBLE <noreply@linvisible.fr>',
-      to: [targetEmail],
-      subject: isDevMode 
-        ? `[DEV - Client: ${order.email}] Confirmation commande #${order.order_number}`
-        : `Confirmation de commande #${order.order_number}`,
+      to: [order.email],
+      subject: `Confirmation de commande #${order.order_number}`,
       html: generateOrderConfirmationTemplate(order, orderItems || []),
     })
 
@@ -221,8 +215,7 @@ Deno.serve(async (req: Request) => {
       data: {
         emailId: data?.id,
         orderNumber: order.order_number,
-        targetEmail: targetEmail,
-        isDevMode: isDevMode
+        targetEmail: order.email
       }
     }), {
       status: 200,

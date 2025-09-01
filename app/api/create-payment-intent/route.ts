@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createOrder } from '@/lib/api/orders'
 import { createClient } from '@/lib/supabase/server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -8,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 })
 
 // Cache des idempotency keys pour éviter les duplications
-const processedKeys = new Map<string, { orderId: string; orderNumber: string; clientSecret: string }>();
+const processedKeys = new Map<string, { clientSecret: string; paymentIntentId: string }>();
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,93 +45,66 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(cached);
     }
 
-    // Vérifier aussi dans la base de données si une commande récente existe
-    const supabase = await createClient();
-    const { data: recentOrders } = await supabase
-      .from('orders')
-      .select('id, order_number')
-      .eq('email', email)
-      .gte('created_at', new Date(Date.now() - 5000).toISOString()) // Commandes des 5 dernières secondes
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (recentOrders && recentOrders.length > 0) {
-      
-      // Vérifier si un payment intent existe déjà pour cette commande
-      try {
-        const paymentIntents = await stripe.paymentIntents.list({
-          limit: 10,
-        });
-        
-        const existingIntent = paymentIntents.data.find(
-          pi => pi.metadata.orderId === recentOrders[0].id
-        );
-        
-        if (existingIntent && existingIntent.client_secret) {
-          const result = {
-            clientSecret: existingIntent.client_secret,
-            orderId: recentOrders[0].id,
-            orderNumber: recentOrders[0].order_number
-          };
-          
-          if (idempotencyKey) {
-            processedKeys.set(idempotencyKey, result);
-          }
-          
-          return NextResponse.json(result);
-        }
-      } catch (stripeError) {
-        console.error('Error checking existing payment intents:', stripeError);
-      }
-    }
-
-    // Créer la commande dans Supabase
-    const { order, error: orderError } = await createOrder({
-      email,
-      firstName,
-      lastName,
-      phone,
-      mondialRelayPoint,
-      deliveryType,
-      deliveryAddress,
-      deliveryPostalCode,
-      deliveryCity,
-      deliveryCountry,
-      items,
-      subtotal,
-      shippingCost,
-      total
-    })
-
-    if (orderError || !order) {
-      return NextResponse.json(
-        { error: `Erreur lors de la création de la commande: ${orderError?.message || 'Erreur inconnue'}` },
-        { status: 400 }
-      )
-    }
-    
-
-    // Créer le PaymentIntent Stripe
+    // Créer le PaymentIntent Stripe en premier
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100), // Stripe utilise les centimes
       currency: 'eur',
+      description: `Commande L'invisible`,
+      receipt_email: email,
       metadata: {
-        orderId: order.id,
-        orderNumber: order.order_number
-      },
-      description: `Commande L'invisible - ${order.order_number}`,
-      receipt_email: email
+        // Stocker les données de commande dans les metadata (limité à 500 chars par clé)
+        email,
+        firstName,
+        lastName,
+        phone
+      }
     })
+
+    // Stocker les données complètes de commande dans pending_orders
+    const supabase = await createClient()
+    const { error: pendingOrderError } = await supabase
+      .from('pending_orders')
+      .insert({
+        payment_intent_id: paymentIntent.id,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        mondial_relay_point: mondialRelayPoint,
+        delivery_type: deliveryType as 'point-relais' | 'domicile',
+        delivery_address: deliveryAddress,
+        delivery_postal_code: deliveryPostalCode,
+        delivery_city: deliveryCity,
+        delivery_country: deliveryCountry || 'FR',
+        items: JSON.stringify(items),
+        subtotal: Number(subtotal),
+        shipping_cost: Number(shippingCost),
+        total: Number(total)
+      })
+
+    if (pendingOrderError) {
+      console.error('❌ Erreur sauvegarde pending order:', pendingOrderError)
+      // Annuler le PaymentIntent si on ne peut pas sauvegarder les données
+      await stripe.paymentIntents.cancel(paymentIntent.id)
+      return NextResponse.json(
+        { error: 'Erreur lors de la sauvegarde temporaire des données' },
+        { status: 500 }
+      )
+    }
+
+    console.log(`💾 Données de commande sauvegardées temporairement pour PaymentIntent ${paymentIntent.id}`)
 
     const result = {
       clientSecret: paymentIntent.client_secret!,
-      orderId: order.id,
-      orderNumber: order.order_number
+      paymentIntentId: paymentIntent.id
     };
 
     // Mettre en cache le résultat avec la clé d'idempotence
     if (idempotencyKey && paymentIntent.client_secret) {
-      processedKeys.set(idempotencyKey, result);
+      processedKeys.set(idempotencyKey, {
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id
+      });
       
       // Nettoyer le cache après 5 minutes
       setTimeout(() => {
