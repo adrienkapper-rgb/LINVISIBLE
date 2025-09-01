@@ -1,49 +1,20 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Sparkles, Award, Users } from "lucide-react";
-import { getProducts, type Product } from "@/lib/products";
-import { AgeVerificationDialog } from "@/components/AgeVerificationDialog";
-import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
+import { getProducts } from "@/lib/api/products";
+import { getProductImageUrl } from "@/lib/api/products";
+import { AgeVerificationWrapper } from "@/components/AgeVerificationWrapper";
 
-export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-
-  useEffect(() => {
-    getProducts().then(products => {
-      setFeaturedProducts(products.slice(0, 3));
-    });
-  }, []);
-  const [showAgeVerification, setShowAgeVerification] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    const ageVerified = localStorage.getItem("ageVerified");
-    if (!ageVerified) {
-      setShowAgeVerification(true);
-    }
-  }, []);
-
-  const handleAgeConfirm = () => {
-    localStorage.setItem("ageVerified", "true");
-    setShowAgeVerification(false);
-  };
-
-  const handleAgeDeny = () => {
-    window.location.href = "https://www.google.com";
-  };
+export default async function Home() {
+  // Fetch products on server for better performance
+  const allProducts = await getProducts();
+  const featuredProducts = allProducts.slice(0, 3);
 
   return (
     <>
-      <AgeVerificationDialog 
-        isOpen={showAgeVerification}
-        onConfirm={handleAgeConfirm}
-        onDeny={handleAgeDeny}
-      />
+      <AgeVerificationWrapper />
       
       <div className="flex flex-col">
         {/* Hero Section */}
@@ -56,6 +27,8 @@ export default function Home() {
             fill
             className="object-cover"
             priority
+            sizes="100vw"
+            quality={90}
           />
         </div>
         
@@ -148,10 +121,12 @@ export default function Home() {
                 <Link href={`/produit/${product.slug}`}>
                   <div className="aspect-square relative bg-gradient-to-b from-muted/20 to-muted/40 cursor-pointer">
                     <Image
-                      src={product.image}
+                      src={getProductImageUrl(product.image_url)}
                       alt={product.name}
                       fill
                       className="object-contain p-8"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
                 </Link>

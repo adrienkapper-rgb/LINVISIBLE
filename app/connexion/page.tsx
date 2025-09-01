@@ -8,24 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { AddressAutocomplete } from '@/components/AddressAutocomplete'
-import { CountrySelect, type CountryCode } from '@/components/CountrySelect'
+import CountrySelect from '@/components/CountrySelect'
 
-interface AddressData {
-  formatted: string
-  street: string
-  housenumber: string
-  postcode: string
-  city: string
-  country: string
-  country_code: string
-}
 
 export default function ConnexionPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
-  const [selectedCountry, setSelectedCountry] = useState<CountryCode>('FR')
-  const [addressData, setAddressData] = useState<AddressData | null>(null)
+  const [selectedCountry, setSelectedCountry] = useState('FR')
   const router = useRouter()
   const { toast } = useToast()
 
@@ -44,16 +33,6 @@ export default function ConnexionPage() {
     }
   }
 
-  const handleAddressSelect = (address: AddressData) => {
-    setAddressData(address)
-    
-    // Auto-remplir les champs séparés si ils existent
-    const postcodeInput = document.getElementById('postcode') as HTMLInputElement
-    const cityInput = document.getElementById('city') as HTMLInputElement
-    
-    if (postcodeInput) postcodeInput.value = address.postcode
-    if (cityInput) cityInput.value = address.city
-  }
 
   const handleSignIn = async (formData: FormData) => {
     setIsLoading(true)
@@ -184,12 +163,9 @@ export default function ConnexionPage() {
               </div>
               
               <form action={handleSignUp} className="space-y-4">
-                {/* Hidden fields for address data */}
+                {/* Hidden fields for country data */}
                 <input type="hidden" name="country" value={selectedCountry} />
-                <input type="hidden" name="address_formatted" value={addressData?.formatted || ''} />
-                <input type="hidden" name="address_street" value={addressData?.street || ''} />
-                <input type="hidden" name="address_housenumber" value={addressData?.housenumber || ''} />
-                <input type="hidden" name="country_code" value={addressData?.country_code || selectedCountry.toLowerCase()} />
+                <input type="hidden" name="country_code" value={selectedCountry.toLowerCase()} />
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
@@ -289,12 +265,17 @@ export default function ConnexionPage() {
                   required
                 />
 
-                <AddressAutocomplete
-                  onAddressSelect={handleAddressSelect}
-                  selectedCountry={selectedCountry}
-                  disabled={isLoading}
-                  required
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="address_formatted">Adresse complète</Label>
+                  <Input
+                    id="address_formatted"
+                    name="address_formatted"
+                    type="text"
+                    placeholder="Votre adresse complète"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -306,8 +287,6 @@ export default function ConnexionPage() {
                       placeholder="75001"
                       required
                       disabled={isLoading}
-                      className={addressData ? "bg-muted" : ""}
-                      readOnly={!!addressData}
                     />
                   </div>
                   <div className="space-y-2">
@@ -319,8 +298,6 @@ export default function ConnexionPage() {
                       placeholder="Paris"
                       required
                       disabled={isLoading}
-                      className={addressData ? "bg-muted" : ""}
-                      readOnly={!!addressData}
                     />
                   </div>
                 </div>

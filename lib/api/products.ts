@@ -1,14 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/types'
+import { cache } from 'react'
 
 export type Product = Database['public']['Tables']['products']['Row']
 
-export async function getProducts(): Promise<Product[]> {
+// React cache for products - revalidates per request
+export const getProducts = cache(async (): Promise<Product[]> => {
   const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('id, slug, name, price, volume, alcohol, image_url, description, ingredients, serving_instructions, serving_size, available, weight, created_at')
     .eq('available', true)
     .order('name')
   
@@ -18,14 +20,15 @@ export async function getProducts(): Promise<Product[]> {
   }
   
   return data || []
-}
+})
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
+// React cache for single product - revalidates per request
+export const getProductBySlug = cache(async (slug: string): Promise<Product | null> => {
   const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('id, slug, name, price, volume, alcohol, image_url, description, ingredients, serving_instructions, serving_size, available, weight, created_at')
     .eq('slug', slug)
     .single()
   
@@ -35,7 +38,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   }
   
   return data
-}
+})
 
 export async function trackProductEvent(
   productId: string,

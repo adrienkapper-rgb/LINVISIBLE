@@ -13,6 +13,7 @@ const processedKeys = new Map<string, { orderId: string; orderNumber: string; cl
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    
     const {
       email,
       firstName,
@@ -30,11 +31,18 @@ export async function POST(request: NextRequest) {
       total,
       idempotencyKey
     } = body
+    
+    // Validation des données requises
+    if (!email || !firstName || !lastName || !phone || !items || items.length === 0) {
+      return NextResponse.json(
+        { error: 'Données requises manquantes' },
+        { status: 400 }
+      )
+    }
 
     // Vérifier si cette clé d'idempotence a déjà été traitée
     if (idempotencyKey && processedKeys.has(idempotencyKey)) {
       const cached = processedKeys.get(idempotencyKey)!;
-      console.log('Returning cached payment intent for idempotency key:', idempotencyKey);
       return NextResponse.json(cached);
     }
 
@@ -49,7 +57,6 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (recentOrders && recentOrders.length > 0) {
-      console.log('Recent order found, checking for existing payment intent...');
       
       // Vérifier si un payment intent existe déjà pour cette commande
       try {
@@ -72,7 +79,6 @@ export async function POST(request: NextRequest) {
             processedKeys.set(idempotencyKey, result);
           }
           
-          console.log('Returning existing payment intent for order:', recentOrders[0].order_number);
           return NextResponse.json(result);
         }
       } catch (stripeError) {
@@ -100,10 +106,11 @@ export async function POST(request: NextRequest) {
 
     if (orderError || !order) {
       return NextResponse.json(
-        { error: 'Erreur lors de la création de la commande' },
+        { error: `Erreur lors de la création de la commande: ${orderError?.message || 'Erreur inconnue'}` },
         { status: 400 }
       )
     }
+    
 
     // Créer le PaymentIntent Stripe
     const paymentIntent = await stripe.paymentIntents.create({
@@ -136,9 +143,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result)
 
   } catch (error) {
-    console.error('Erreur création PaymentIntent:', error)
+    console.error('Error in payment intent creation:', error)
+    
     return NextResponse.json(
-      { error: 'Erreur lors de la création du paiement' },
+      { error: `Erreur lors de la création du paiement: ${error instanceof Error ? error.message : 'Erreur inconnue'}` },
       { status: 500 }
     )
   }

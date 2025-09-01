@@ -28,52 +28,56 @@ interface CreateOrderData {
 }
 
 export async function createOrder(orderData: CreateOrderData): Promise<{ order: Order | null, error: any }> {
-  const supabase = await createClient()
-  
-  // Get the authenticated user to link the order
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  // Generate order number
-  const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-  
-  // Start a transaction by creating the order first
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert({
+  try {
+    
+    const supabase = await createClient()
+    
+    // Generate order number
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+    
+    // Prepare order data with proper validation
+    const orderDataToInsert = {
       order_number: orderNumber,
-      customer_id: user?.id || null, // Associate with logged in user if available
       email: orderData.email,
       first_name: orderData.firstName,
       last_name: orderData.lastName,
       phone: orderData.phone,
       mondial_relay_point: orderData.mondialRelayPoint || null,
-      delivery_type: orderData.deliveryType,
+      delivery_type: orderData.deliveryType || 'domicile',
       delivery_address: orderData.deliveryAddress || null,
       delivery_postal_code: orderData.deliveryPostalCode || null,
       delivery_city: orderData.deliveryCity || null,
-      delivery_country: orderData.deliveryCountry,
-      subtotal: orderData.subtotal,
-      shipping_cost: orderData.shippingCost,
-      total: orderData.total,
+      delivery_country: orderData.deliveryCountry || 'FR',
+      subtotal: Number(orderData.subtotal),
+      shipping_cost: Number(orderData.shippingCost),
+      total: Number(orderData.total),
       status: 'pending'
-    })
-    .select()
-    .single()
-  
-  if (orderError) {
-    console.error('Error creating order:', orderError)
-    return { order: null, error: orderError }
-  }
+    }
+    
+    
+    // Start a transaction by creating the order first
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert(orderDataToInsert)
+      .select()
+      .single()
+    
+    if (orderError) {
+      console.error('Error creating order:', orderError)
+      return { order: null, error: orderError }
+    }
+    
   
   // Create order items
   const orderItems = orderData.items.map(item => ({
     order_id: order.id,
     product_id: item.productId,
     product_name: item.productName,
-    product_price: item.productPrice,
-    quantity: item.quantity,
-    total: item.productPrice * item.quantity
+    product_price: Number(item.productPrice),
+    quantity: Number(item.quantity),
+    total: Number(item.productPrice) * Number(item.quantity)
   }))
+  
   
   const { error: itemsError } = await supabase
     .from('order_items')
@@ -84,6 +88,7 @@ export async function createOrder(orderData: CreateOrderData): Promise<{ order: 
     // Should ideally rollback the order creation here
     return { order: null, error: itemsError }
   }
+  
   
   // Track purchase events
   for (const item of orderData.items) {
@@ -111,18 +116,26 @@ export async function createOrder(orderData: CreateOrderData): Promise<{ order: 
     
     // Email de confirmation au client
     await sendOrderConfirmationEmail({ order, orderItems })
-    console.log(`✅ Email confirmation envoyé pour commande ${order.order_number}`)
     
     // Email de notification à l'admin
     await sendAdminNotificationEmail({ order, orderItems })
-    console.log(`✅ Email notification admin envoyé pour commande ${order.order_number}`)
     
   } catch (emailError) {
-    console.error('❌ Erreur envoi emails:', emailError)
+    console.error('Error sending emails:', emailError)
     // Ne pas faire échouer la création de commande si les emails échouent
   }
   
   return { order, error: null }
+  } catch (error) {
+    console.error('Unexpected error in createOrder:', error)
+    return { 
+      order: null, 
+      error: {
+        message: error instanceof Error ? error.message : 'Erreur inattendue lors de la création de la commande',
+        details: error
+      }
+    }
+  }
 }
 
 export async function updateOrderStatus(

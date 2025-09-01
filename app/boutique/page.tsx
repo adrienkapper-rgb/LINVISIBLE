@@ -1,8 +1,35 @@
+import { Suspense } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { getProducts, getProductImageUrl } from "@/lib/api/products";
+import { ProductGridSkeleton } from "@/components/skeletons/ProductGridSkeleton";
 
-export default async function BoutiquePage() {
+async function ProductGrid() {
   const products = await getProducts();
+  
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Aucun produit disponible pour le moment.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {products.map((product) => (
+        <ProductCard 
+          key={product.id} 
+          product={{
+            ...product,
+            image: getProductImageUrl(product.image_url)
+          }} 
+        />
+      ))}
+    </div>
+  );
+}
+
+export default function BoutiquePage() {
   return (
     <div className="container px-4 py-8 md:py-12">
       <div className="mb-12 text-center">
@@ -13,23 +40,9 @@ export default async function BoutiquePage() {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.map((product) => (
-          <ProductCard 
-            key={product.id} 
-            product={{
-              ...product,
-              image: getProductImageUrl(product.image_url)
-            }} 
-          />
-        ))}
-      </div>
-
-      {products.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Aucun produit disponible pour le moment.</p>
-        </div>
-      )}
+      <Suspense fallback={<ProductGridSkeleton count={6} />}>
+        <ProductGrid />
+      </Suspense>
 
       <div className="mt-16 bg-muted/40 rounded-lg p-8 text-center">
         <h2 className="text-2xl font-serif mb-4">Comment servir nos cocktails</h2>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 
 export interface OrderItem {
@@ -55,41 +55,134 @@ export function useUserOrders(initialPage: number = 1, limit: number = 10): UseU
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<OrdersPagination | null>(null)
+  
+  // Refs for request cancellation and debouncing
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const fetchOrders = async (page: number = initialPage) => {
+  const fetchOrders = useCallback(async (page: number = initialPage) => {
     if (!user) {
       setOrders([])
       setPagination(null)
       return
     }
 
+    // Cancel previous request if it exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
     setLoading(true)
     setError(null)
 
     try {
-      const response = await fetch(`/api/user-orders?page=${page}&limit=${limit}`)
+      console.log('Fetching user orders - Hook:', { page, limit, user_id: user.id })
+      
+      const response = await fetch(`/api/user-orders?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Ensure cookies are sent
+        signal: abortController.signal, // Add abort signal
+      })
       
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erreur lors du chargement des commandes')
+        let errorData;
+        try {
+          errorData = await response.json()
+        } catch {
+          errorData = { error: `Erreur HTTP ${response.status}: ${response.statusText}` }
+        }
+        
+        console.error('API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        })
+        
+        throw new Error(
+          errorData.details || 
+          errorData.error || 
+          `Erreur ${response.status}: ${response.statusText}`
+        )
       }
 
       const data = await response.json()
+      
+      // Validate response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Réponse API invalide: format de données incorrect')
+      }
+      
+      if (!Array.isArray(data.orders)) {
+        throw new Error('Réponse API invalide: orders doit être un tableau')
+      }
+      
+      console.log('Successfully fetched orders:', {
+        ordersCount: data.orders.length,
+        pagination: data.pagination
+      })
+      
       setOrders(data.orders)
       setPagination(data.pagination)
 
     } catch (err) {
+      // Don't show error if request was aborted
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('Request was aborted')
+        return
+      }
+      
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue'
       setError(errorMessage)
-      console.error('Error fetching user orders:', err)
+      console.error('Error in useUserOrders hook:', {
+        error: err,
+        message: errorMessage,
+        user_id: user.id,
+        page,
+        limit
+      })
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, initialPage, limit])
+
+  // Debounced fetch function
+  const debouncedFetchOrders = useCallback((page: number) => {
+    // Clear existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    
+    // Set new timeout for debouncing
+    timeoutRef.current = setTimeout(() => {
+      fetchOrders(page)
+    }, 300) // 300ms debounce
+  }, [fetchOrders])
 
   useEffect(() => {
-    fetchOrders(initialPage)
-  }, [user, initialPage, limit])
+    if (user) {
+      debouncedFetchOrders(initialPage)
+    } else {
+      setOrders([])
+      setPagination(null)
+    }
+    
+    // Cleanup function
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [user, initialPage, limit, debouncedFetchOrders])
 
   return {
     orders,

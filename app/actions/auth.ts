@@ -23,8 +23,6 @@ export async function signUp(formData: FormData) {
     company_name: formData.get('company') as string || null,
     country: formData.get('country') as string,
     address_formatted: formData.get('address_formatted') as string,
-    address_street: formData.get('address_street') as string || null,
-    address_housenumber: formData.get('address_housenumber') as string || null,
     postcode: formData.get('postcode') as string,
     city: formData.get('city') as string,
     country_code: formData.get('country_code') as string,
@@ -68,9 +66,7 @@ export async function signUp(formData: FormData) {
       country_code: profileData.country_code,
       phone: profileData.phone || null,
       account_type: profileData.account_type || 'particulier',
-      company_name: profileData.company_name || null,
-      address_street: profileData.address_street || null,
-      address_housenumber: profileData.address_housenumber || null
+      company_name: profileData.company_name || null
     })
 
     if (profileError) {

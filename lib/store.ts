@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { subscribeWithSelector } from 'zustand/middleware';
 
 interface CartProduct {
   id: string;
@@ -33,63 +34,65 @@ interface CartStore {
 }
 
 export const useCart = create<CartStore>()(
-  persist(
-    (set, get) => ({
-      items: [],
-      
-      addItem: (product, quantity) => {
-        set((state) => {
-          const existingItem = state.items.find(item => item.product.id === product.id);
-          
-          if (existingItem) {
+  subscribeWithSelector(
+    persist(
+      (set, get) => ({
+        items: [],
+        
+        addItem: (product, quantity) => {
+          set((state) => {
+            const existingItemIndex = state.items.findIndex(item => item.product.id === product.id);
+            
+            if (existingItemIndex !== -1) {
+              return {
+                items: state.items.map((item, index) =>
+                  index === existingItemIndex
+                    ? { ...item, quantity: item.quantity + quantity }
+                    : item
+                )
+              };
+            }
+            
             return {
-              items: state.items.map(item =>
-                item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
-                  : item
-              )
+              items: [...state.items, { product, quantity }]
             };
+          });
+        },
+        
+        removeItem: (productId) => {
+          set((state) => ({
+            items: state.items.filter(item => item.product.id !== productId)
+          }));
+        },
+        
+        updateQuantity: (productId, quantity) => {
+          if (quantity <= 0) {
+            get().removeItem(productId);
+            return;
           }
           
-          return {
-            items: [...state.items, { product, quantity }]
-          };
-        });
-      },
-      
-      removeItem: (productId) => {
-        set((state) => ({
-          items: state.items.filter(item => item.product.id !== productId)
-        }));
-      },
-      
-      updateQuantity: (productId, quantity) => {
-        if (quantity <= 0) {
-          get().removeItem(productId);
-          return;
-        }
+          set((state) => ({
+            items: state.items.map(item =>
+              item.product.id === productId
+                ? { ...item, quantity }
+                : item
+            )
+          }));
+        },
         
-        set((state) => ({
-          items: state.items.map(item =>
-            item.product.id === productId
-              ? { ...item, quantity }
-              : item
-          )
-        }));
-      },
-      
-      clearCart: () => set({ items: [] }),
-      
-      getTotalItems: () => {
-        return get().items.reduce((total, item) => total + item.quantity, 0);
-      },
-      
-      getTotalPrice: () => {
-        return get().items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+        clearCart: () => set({ items: [] }),
+        
+        getTotalItems: () => {
+          return get().items.reduce((total, item) => total + item.quantity, 0);
+        },
+        
+        getTotalPrice: () => {
+          return get().items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+        }
+      }),
+      {
+        name: 'linvisible-cart'
       }
-    }),
-    {
-      name: 'linvisible-cart'
-    }
+    )
   )
 );
