@@ -2,6 +2,11 @@ import { Resend } from 'npm:resend@4.0.0'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 interface OrderData {
   id: string
   order_number: string
@@ -129,11 +134,6 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
 }
 
 Deno.serve(async (req: Request) => {
-  // Headers CORS pour autoriser les appels cross-origin
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  }
 
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -155,6 +155,8 @@ Deno.serve(async (req: Request) => {
       // Vérifier si c'est un webhook Supabase (automatique)
       if (body.type && body.record && body.table === 'orders') {
         console.log('📨 Webhook reçu pour nouvelle commande')
+        console.log(`🛒 Order ID: ${body.record.id}`)
+        console.log(`📧 Customer: ${body.record.first_name} ${body.record.last_name}`)
         const webhookPayload: WebhookPayload = body
         order = webhookPayload.record
         
@@ -164,6 +166,8 @@ Deno.serve(async (req: Request) => {
       } else {
         // Appel direct avec données complètes
         console.log('📨 Appel direct à l\'edge function')
+        console.log(`🛒 Order Number: ${body.order?.order_number}`)
+        console.log(`📧 Customer: ${body.order?.first_name} ${body.order?.last_name}`)
         const requestBody: RequestBody = body
         order = requestBody.order
         orderItems = requestBody.orderItems || []
@@ -178,40 +182,59 @@ Deno.serve(async (req: Request) => {
       return new Response('Missing required order data', { status: 400 })
     }
 
-    // Envoyer l'email à adrienkapper@gmail.com (email de test demandé)
-    const targetEmail = 'adrienkapper@gmail.com'
-    console.log(`📧 Envoi email de confirmation commande ${order.order_number} vers ${targetEmail}`)
+    // Déterminer l'email cible (mode développement ou production)
+    const targetEmail = Deno.env.get('TARGET_EMAIL') || 'adrienkapper@gmail.com'
+    const isDevMode = targetEmail === 'adrienkapper@gmail.com'
     
-    const { error } = await resend.emails.send({
+    console.log(`📧 Envoi email de confirmation commande ${order.order_number}`)
+    console.log(`🎯 Destinataire: ${targetEmail} ${isDevMode ? '(mode développement)' : '(mode production)'}`)
+    
+    const { data, error } = await resend.emails.send({
       from: 'L\'INVISIBLE <noreply@linvisible.fr>',
       to: [targetEmail],
-      subject: `Confirmation de commande #${order.order_number}`,
+      subject: isDevMode 
+        ? `[DEV - Client: ${order.email}] Confirmation commande #${order.order_number}`
+        : `Confirmation de commande #${order.order_number}`,
       html: generateOrderConfirmationTemplate(order, orderItems || []),
     })
 
     if (error) {
-      console.error('Erreur envoi email:', error)
-      return new Response(JSON.stringify({ error: error.message }), {
+      console.error('❌ Erreur envoi email:', error)
+      return new Response(JSON.stringify({ 
+        error: 'Failed to send email',
+        details: error.message,
+        orderNumber: order.order_number
+      }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    console.log(`✅ Email de confirmation envoyé pour commande ${order.order_number}`)
+    console.log(`✅ Email de confirmation envoyé avec succès !`)
+    console.log(`📨 Email ID: ${data?.id}`)
+    console.log(`🛒 Commande: ${order.order_number}`)
+    console.log(`👤 Client: ${order.first_name} ${order.last_name} (${order.email})`)
     
     return new Response(JSON.stringify({ 
       success: true, 
-      message: 'Email sent successfully' 
+      message: 'Order confirmation email sent successfully',
+      data: {
+        emailId: data?.id,
+        orderNumber: order.order_number,
+        targetEmail: targetEmail,
+        isDevMode: isDevMode
+      }
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
 
   } catch (error) {
-    console.error('Erreur dans Edge Function:', error)
+    console.error('❌ Erreur générale dans Edge Function:', error)
     return new Response(JSON.stringify({ 
       error: 'Internal server error',
-      details: error.message 
+      details: error.message,
+      timestamp: new Date().toISOString()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

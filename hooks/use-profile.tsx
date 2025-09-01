@@ -49,10 +49,47 @@ export function useProfile() {
     fetchProfile()
   }, [user])
 
+  const updateProfile = async (updatedData: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>) => {
+    if (!user || !profile) return { success: false, error: 'Utilisateur non connecté' }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updatedData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error updating profile:', error)
+        setError(error.message)
+        return { success: false, error: error.message }
+      } else {
+        setProfile(data)
+        return { success: true, data }
+      }
+    } catch (err) {
+      console.error('Unexpected error updating profile:', err)
+      const errorMessage = 'Erreur lors de la mise à jour du profil'
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return {
     profile,
     loading,
     error,
+    updateProfile,
     displayName: profile?.first_name || user?.email?.split('@')[0] || 'Utilisateur'
   }
 }

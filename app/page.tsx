@@ -37,7 +37,7 @@ export default async function Home() {
           <div className="text-center">
             <h1 className="text-5xl md:text-7xl font-serif mb-4">L'invisible</h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-              Atelier artisanal et éditeur de cocktails prêt à boire
+              Atelier artisanal et éditeur de cocktails prêts à boire
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/boutique">

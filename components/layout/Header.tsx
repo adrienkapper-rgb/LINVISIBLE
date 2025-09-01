@@ -67,6 +67,12 @@ export function Header() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link href="/mes-infos">
+                      <User className="mr-2 h-4 w-4" />
+                      Mes infos
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/mes-commandes">
                       <Package className="mr-2 h-4 w-4" />
                       Mes commandes

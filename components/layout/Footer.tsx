@@ -29,8 +29,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-muted-foreground hover:text-primary">
-                  À propos
+                <Link href="/contact" className="text-muted-foreground hover:text-primary">
+                  Contact
                 </Link>
               </li>
             </ul>

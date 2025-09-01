@@ -23,7 +23,7 @@ export async function sendOrderConfirmationEmail(data: EmailData) {
   
   try {
     await resend.emails.send({
-      from: 'L\'INVISIBLE <noreply@linvisible.fr>',
+      from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [targetEmail],
       subject: `Confirmation de commande #${order.order_number}`,
       html: generateOrderConfirmationTemplate(order, orderItems),
@@ -42,7 +42,7 @@ export async function sendPaymentConfirmationEmail(data: EmailData) {
   
   try {
     await resend.emails.send({
-      from: 'L\'INVISIBLE <noreply@linvisible.fr>',
+      from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [order.email],
       subject: `Paiement confirmé - Commande #${order.order_number}`,
       html: generatePaymentConfirmationTemplate(order, orderItems),
@@ -63,7 +63,7 @@ export async function sendAdminNotificationEmail(data: EmailData) {
   
   try {
     await resend.emails.send({
-      from: 'L\'INVISIBLE <noreply@linvisible.fr>',
+      from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [adminEmail],
       subject: `🔔 Nouvelle commande payée #${order.order_number}`,
       html: generateAdminNotificationTemplate(order, orderItems),
@@ -82,7 +82,7 @@ export async function sendShippingNotificationEmail(data: EmailData) {
   
   try {
     await resend.emails.send({
-      from: 'L\'INVISIBLE <noreply@linvisible.fr>',
+      from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [order.email],
       subject: `📦 Votre commande #${order.order_number} a été expédiée`,
       html: generateShippingNotificationTemplate(order, orderItems),
@@ -101,7 +101,7 @@ export async function sendDeliveryNotificationEmail(data: EmailData) {
   
   try {
     await resend.emails.send({
-      from: 'L\'INVISIBLE <noreply@linvisible.fr>',
+      from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [order.email],
       subject: `🎉 Votre commande #${order.order_number} est arrivée`,
       html: generateDeliveryNotificationTemplate(order, orderItems),
@@ -193,7 +193,7 @@ function generateOrderConfirmationTemplate(order: Order, orderItems: OrderItem[]
         <hr style="margin: 30px 0;">
         <p style="font-size: 12px; color: #666;">
           L'INVISIBLE - Cocktails premium<br>
-          En cas de question, contactez-nous à contact@linvisible.fr
+          En cas de question, contactez-nous à contact@cocktails-linvisible.fr
         </p>
       </div>
     </body>
@@ -228,7 +228,7 @@ function generatePaymentConfirmationTemplate(order: Order, orderItems: OrderItem
         <hr style="margin: 30px 0;">
         <p style="font-size: 12px; color: #666;">
           L'INVISIBLE - Cocktails premium<br>
-          En cas de question, contactez-nous à contact@linvisible.fr
+          En cas de question, contactez-nous à contact@cocktails-linvisible.fr
         </p>
       </div>
     </body>
@@ -318,7 +318,7 @@ function generateShippingNotificationTemplate(order: Order, orderItems: OrderIte
         <hr style="margin: 30px 0;">
         <p style="font-size: 12px; color: #666;">
           L'INVISIBLE - Cocktails premium<br>
-          En cas de question, contactez-nous à contact@linvisible.fr
+          En cas de question, contactez-nous à contact@cocktails-linvisible.fr
         </p>
       </div>
     </body>
@@ -362,7 +362,7 @@ function generateDeliveryNotificationTemplate(order: Order, orderItems: OrderIte
         <hr style="margin: 30px 0;">
         <p style="font-size: 12px; color: #666;">
           L'INVISIBLE - Cocktails premium<br>
-          En cas de question, contactez-nous à contact@linvisible.fr
+          En cas de question, contactez-nous à contact@cocktails-linvisible.fr
         </p>
       </div>
     </body>
