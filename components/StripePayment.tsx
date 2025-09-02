@@ -52,8 +52,8 @@ function CheckoutForm({ clientSecret, onSuccess, onError, total, orderNumber }: 
         variant: "destructive",
       });
     } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      // Rediriger vers une page de traitement qui attend la création de la commande
-      window.location.href = `/confirmation?payment_intent=${paymentIntent.id}`;
+      // Appeler onSuccess qui videra le panier et redirigera vers la confirmation
+      onSuccess(paymentIntent.id);
     }
 
     setIsLoading(false);

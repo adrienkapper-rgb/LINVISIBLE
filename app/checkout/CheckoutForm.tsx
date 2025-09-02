@@ -167,7 +167,12 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
 
   const handlePaymentSuccess = (orderNumber: string) => {
     clearCart();
-    router.push(`/confirmation?order=${orderNumber}`);
+    // Si c'est un PaymentIntent ID (commence par "pi_"), utiliser le paramètre payment_intent
+    if (orderNumber.startsWith('pi_')) {
+      router.push(`/confirmation?payment_intent=${orderNumber}`);
+    } else {
+      router.push(`/confirmation?order=${orderNumber}`);
+    }
   };
 
   const handlePaymentError = (error: string) => {
