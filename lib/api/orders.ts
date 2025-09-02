@@ -171,6 +171,37 @@ export async function updateOrderStatus(
   return { success: true, error: null }
 }
 
+export async function getOrderByPaymentIntent(paymentIntentId: string, maxRetries = 10): Promise<Order | null> {
+  const supabase = await createClient()
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('stripe_payment_intent_id', paymentIntentId)
+      .single()
+    
+    if (data) {
+      console.log(`✅ Commande trouvée par PaymentIntent ${paymentIntentId} (tentative ${attempt}/${maxRetries})`)
+      return data
+    }
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching order by payment intent:', error)
+      return null
+    }
+    
+    if (attempt < maxRetries) {
+      console.log(`🔄 Commande pour PaymentIntent ${paymentIntentId} non trouvée, retry ${attempt}/${maxRetries} dans 3s...`)
+      await new Promise(resolve => setTimeout(resolve, 3000))
+    } else {
+      console.log(`❌ Commande pour PaymentIntent ${paymentIntentId} non trouvée après ${maxRetries} tentatives`)
+    }
+  }
+  
+  return null
+}
+
 export async function getOrderByNumber(orderNumber: string, maxRetries = 5): Promise<Order | null> {
   const supabase = await createClient()
   

@@ -2,12 +2,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Package, Mail, ArrowRight, Loader2 } from "lucide-react";
-import { getOrderByNumber, getOrderItems } from "@/lib/api/orders";
+import { getOrderByNumber, getOrderItems, getOrderByPaymentIntent } from "@/lib/api/orders";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 interface ConfirmationPageProps {
-  searchParams: Promise<{ order?: string }>;
+  searchParams: Promise<{ order?: string; payment_intent?: string }>;
 }
 
 // Composant de loading
@@ -30,13 +30,22 @@ function LoadingConfirmation() {
 export default async function ConfirmationPage({ searchParams }: ConfirmationPageProps) {
   const params = await searchParams;
   const orderNumber = params.order;
+  const paymentIntentId = params.payment_intent;
   
-  if (!orderNumber) {
+  if (!orderNumber && !paymentIntentId) {
     notFound();
   }
 
-  // Attendre la commande avec retry automatique
-  const order = await getOrderByNumber(orderNumber, 8); // 8 tentatives = ~16 secondes max
+  let order = null;
+  
+  if (orderNumber) {
+    // Ancienne méthode - par numéro de commande
+    order = await getOrderByNumber(orderNumber, 8);
+  } else if (paymentIntentId) {
+    // Nouvelle méthode - par PaymentIntent ID
+    order = await getOrderByPaymentIntent(paymentIntentId, 10);
+  }
+  
   const orderItems = order ? await getOrderItems(order.id) : [];
   
   if (!order) {
@@ -52,7 +61,13 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
             Vous recevrez un email de confirmation dans quelques minutes.
           </p>
           <p className="text-sm text-muted-foreground mb-6">
-            Numéro de commande : <span className="font-mono">{orderNumber}</span>
+            {orderNumber ? (
+              <>Numéro de commande : <span className="font-mono">{orderNumber}</span></>
+            ) : paymentIntentId ? (
+              <>Référence de paiement : <span className="font-mono">{paymentIntentId}</span></>
+            ) : (
+              <>Commande en cours de traitement...</>
+            )}
           </p>
           <Link href="/">
             <Button>Retour à l'accueil</Button>

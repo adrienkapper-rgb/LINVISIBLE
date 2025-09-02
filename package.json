@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:webhooks": "node scripts/dev-webhook-listener.js",
+    "dev:full": "node scripts/dev-with-webhooks.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -52,6 +54,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "node-fetch": "^3.3.2",
     "typescript": "^5"
   }
 }

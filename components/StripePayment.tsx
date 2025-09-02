@@ -52,11 +52,8 @@ function CheckoutForm({ clientSecret, onSuccess, onError, total, orderNumber }: 
         variant: "destructive",
       });
     } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      onSuccess(orderNumber);
-      toast({
-        title: "Paiement réussi !",
-        description: "Votre commande a été confirmée",
-      });
+      // Rediriger vers une page de traitement qui attend la création de la commande
+      window.location.href = `/confirmation?payment_intent=${paymentIntent.id}`;
     }
 
     setIsLoading(false);
@@ -147,7 +144,8 @@ export function StripePayment({ orderData, onSuccess, onError }: StripePaymentPr
       }
 
       setClientSecret(data.clientSecret);
-      setOrderNumber(data.orderNumber);
+      // L'orderNumber sera généré après le paiement par le webhook
+      setOrderNumber(data.paymentIntentId); // Utiliser temporairement le PaymentIntent ID
     } catch (error) {
       onError('Erreur lors de la préparation du paiement');
       hasCreatedIntent.current = false; // Permettre une nouvelle tentative en cas d'erreur
