@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/types'
-import { sendOrderConfirmationEmail, sendAdminNotificationEmail, sendShippingNotificationEmail, sendDeliveryNotificationEmail } from '@/lib/email/service'
+import { sendOrderConfirmationEmail, sendAdminNotificationEmail, sendPaymentConfirmationEmail, sendShippingNotificationEmail, sendDeliveryNotificationEmail } from '@/lib/email/service'
 
 export type Order = Database['public']['Tables']['orders']['Row']
 export type OrderItem = Database['public']['Tables']['order_items']['Row']
@@ -157,10 +157,26 @@ export async function updateOrderStatus(
       const orderItems = await getOrderItems(orderId)
       const updatedOrder = { ...currentOrder, status }
       
-      if (status === 'shipped') {
+      if (status === 'processing') {
+        // Commande payée - Envoyer tous les emails de confirmation
+        console.log(`📧 Envoi des emails de confirmation pour commande ${updatedOrder.order_number} (statut: ${status})`)
+        
+        await sendOrderConfirmationEmail({ order: updatedOrder, orderItems })
+        console.log(`✅ Email confirmation commande envoyé`)
+        
+        await sendPaymentConfirmationEmail({ order: updatedOrder, orderItems })
+        console.log(`✅ Email confirmation paiement envoyé`)
+        
+        await sendAdminNotificationEmail({ order: updatedOrder, orderItems })
+        console.log(`✅ Email admin envoyé`)
+        
+      } else if (status === 'shipped') {
         await sendShippingNotificationEmail({ order: updatedOrder, orderItems })
+        console.log(`✅ Email expédition envoyé`)
+        
       } else if (status === 'delivered') {
         await sendDeliveryNotificationEmail({ order: updatedOrder, orderItems })
+        console.log(`✅ Email livraison envoyé`)
       }
     } catch (emailError) {
       console.error('Erreur envoi email changement statut:', emailError)

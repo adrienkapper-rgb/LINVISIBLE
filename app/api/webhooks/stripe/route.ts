@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { updateOrderStatus, getOrderItems } from '@/lib/api/orders'
-import { sendPaymentConfirmationEmail, sendOrderConfirmationEmail, sendAdminNotificationEmail } from '@/lib/email/service'
+import { updateOrderStatus } from '@/lib/api/orders'
 import { createClient } from '@/lib/supabase/server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -55,33 +54,8 @@ async function processSuccessfulPayment(supabase: any, order: any, paymentIntent
     }
 
     console.log(`💰 Paiement enregistré pour commande ${order.order_number}`)
-
-    // Récupérer les articles de la commande pour les emails
-    const orderItems = await getOrderItems(order.id)
-    
-    // Envoyer les emails de confirmation (avec gestion d'erreur pour ne pas bloquer le webhook)
-    try {
-      await sendOrderConfirmationEmail({ order, orderItems })
-      console.log(`📧 Email de confirmation commande envoyé pour ${order.order_number}`)
-    } catch (emailError) {
-      console.error('⚠️ Erreur envoi email confirmation commande:', emailError)
-    }
-    
-    try {
-      await sendAdminNotificationEmail({ order, orderItems })
-      console.log(`📧 Email admin envoyé pour commande ${order.order_number}`)
-    } catch (emailError) {
-      console.error('⚠️ Erreur envoi email admin:', emailError)
-    }
-
-    try {
-      await sendPaymentConfirmationEmail({ order, orderItems })
-      console.log(`📧 Email de confirmation paiement envoyé pour ${order.order_number}`)
-    } catch (emailError) {
-      console.error('⚠️ Erreur envoi email confirmation paiement:', emailError)
-    }
-
     console.log(`✅ Paiement traité avec succès pour commande ${order.order_number}`)
+    console.log(`📧 Les emails seront envoyés automatiquement par le changement de statut vers 'processing'`)
     
   } catch (error) {
     console.error('❌ Erreur dans processSuccessfulPayment:', error)
