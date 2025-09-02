@@ -1,38 +1,45 @@
 # Configuration des Webhooks Stripe - L'Invisible Shop
 
-## Deux webhooks configurés :
+## Webhooks configurés :
 
-### 1. Webhook PRODUCTION (Vercel)
-- **URL** : https://www.cocktails-linvisible.fr/api/webhooks/stripe
-- **Nom** : creative-brilliance  
-- **Secret** : whsec_Z7XHqvtCMW3Tnq4Tqy11nvfABRlfx6cJ
-- **Utilisation** : Site en production sur Vercel
+### 1. Webhook TEST (Vercel)
+- **URL** : https://cocktails-linvisible.fr/api/webhooks/stripe
+- **Nom** : linvisible-test-webhook
+- **Secret** : whsec_3DShWIryl5cj4jAFlmOFhkO2DKIcNr4W
+- **Utilisation** : Tests sur Vercel avec clés Stripe de test
+- **Événements** : payment_intent.succeeded, payment_intent.payment_failed
 
-### 2. Webhook DÉVELOPPEMENT LOCAL
-- **URL** : https://0c20f1245a6.ngrok-free.app/api/webhooks/stripe
-- **Nom** : linvisible-shop-local-dev
-- **Secret** : whsec_BWfZgzHX3GqrbXrVJ5qxhpSf7YoZfFDo
-- **Utilisation** : Développement local avec ngrok
+### 2. Webhook PRODUCTION (À configurer)
+- **URL** : https://cocktails-linvisible.fr/api/webhooks/stripe
+- **Nom** : linvisible-production-webhook
+- **Secret** : À configurer avec les clés de production
+- **Utilisation** : Production avec clés Stripe live
+- **Événements** : payment_intent.succeeded, payment_intent.payment_failed
 
-## Comment utiliser :
+## Configuration sur Vercel :
 
-### Pour le développement local :
-1. Lancez votre app : `npm run dev`
-2. Lancez ngrok : `ngrok http 3000` 
-3. Copiez le fichier : `cp .env.local.dev .env.local`
-4. Ou renommez : `.env.local.dev` → `.env.local`
+### Variables d'environnement requises :
+```
+STRIPE_SECRET_KEY=sk_test_... (ou sk_live_... en production)
+STRIPE_WEBHOOK_SECRET=whsec_3DShWIryl5cj4jAFlmOFhkO2DKIcNr4W (test) 
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_... (ou pk_live_... en production)
+NEXT_PUBLIC_SUPABASE_URL=https://rnxhkjvcixumuvjfxdjo.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+RESEND_API_KEY=re_...
+ADMIN_EMAIL=adrienkapper@gmail.com
+```
 
-### Pour la production :
-- Le fichier `.env.local` doit contenir le secret du webhook Vercel
-- Ou configurez les variables d'environnement directement sur Vercel
+### Important :
+- **Mode TEST** : Utilisez le webhook de test avec `whsec_3DShWIryl5cj4jAFlmOFhkO2DKIcNr4W`
+- **Mode PRODUCTION** : Créez un nouveau webhook en mode live avec un nouveau secret
 
-## URLs ngrok actuelles :
-- **HTTPS** : https://0c20f1245a6.ngrok-free.app
-- **HTTP** : http://0c20f1245a6.ngrok-free.app
+## Test du webhook :
+1. Effectuez un paiement de test sur https://cocktails-linvisible.fr
+2. Vérifiez que le statut de la commande passe de `pending` à `processing`
+3. Consultez les logs Vercel pour voir les événements webhook
+4. Vérifiez que les emails de confirmation sont envoyés
 
-**Note** : L'URL ngrok change à chaque redémarrage. Si vous relancez ngrok, vous devrez mettre à jour l'URL du webhook dans Stripe Dashboard.
-
-## Test des webhooks :
-1. Vérifiez que ngrok fonctionne : visitez https://0c20f1245a6.ngrok-free.app
-2. Testez les paiements sur votre app locale
-3. Vérifiez les logs des webhooks dans Stripe Dashboard
+## Diagnostic :
+- **Endpoint de debug** : https://cocktails-linvisible.fr/api/webhooks/stripe/debug
+- **Logs Vercel** : Dashboard Vercel > Functions > Logs
+- **Dashboard Stripe** : Webhooks > Événements pour voir les tentatives de livraison
