@@ -18,7 +18,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "L'invisible - Éditeur de cocktail",
+  title: "L'invisible - Éditeur de cocktails",
   description: "Atelier artisanal dédié à l'art des cocktails, niché au cœur de Bordeaux",
 };
 
