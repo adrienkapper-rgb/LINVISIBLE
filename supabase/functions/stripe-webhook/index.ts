@@ -81,28 +81,33 @@ async function getOrderItems(orderId: string): Promise<OrderItem[]> {
   return items || []
 }
 
-// Function to call Next.js API route for order confirmation email
+// Function to call Supabase Edge Function for order confirmation email
 async function sendOrderConfirmationEmail(order: OrderData, orderItems: OrderItem[]) {
   try {
-    console.log('📧 Appel API Route send-confirmation')
+    console.log('📧 Appel Edge Function send-order-confirmation')
     
-    const response = await fetch(`${Deno.env.get('NEXTJS_URL')}/api/emails/send-confirmation`, {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    if (!supabaseUrl) {
+      throw new Error('SUPABASE_URL not configured')
+    }
+    
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-order-confirmation`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': Deno.env.get('INTERNAL_API_KEY') || ''
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
       },
       body: JSON.stringify({ order, orderItems })
     })
     
     if (!response.ok) {
       const errorData = await response.json()
-      console.error('❌ Erreur API Route send-confirmation:', errorData)
-      throw new Error(`API route error: ${response.status} - ${errorData.error}`)
+      console.error('❌ Erreur Edge Function send-order-confirmation:', errorData)
+      throw new Error(`Edge function error: ${response.status} - ${errorData.error}`)
     }
     
     const data = await response.json()
-    console.log('✅ API Route send-confirmation réussie:', data)
+    console.log('✅ Edge Function send-order-confirmation réussie:', data)
     return data
   } catch (error) {
     console.error('❌ Erreur dans sendOrderConfirmationEmail:', error)
@@ -110,28 +115,33 @@ async function sendOrderConfirmationEmail(order: OrderData, orderItems: OrderIte
   }
 }
 
-// Function to call Next.js API route for admin notification email
+// Function to call Supabase Edge Function for admin notification email
 async function sendAdminNotificationEmail(order: OrderData, orderItems: OrderItem[]) {
   try {
-    console.log('📧 Appel API Route send-admin')
+    console.log('📧 Appel Edge Function send-admin-notification')
     
-    const response = await fetch(`${Deno.env.get('NEXTJS_URL')}/api/emails/send-admin`, {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    if (!supabaseUrl) {
+      throw new Error('SUPABASE_URL not configured')
+    }
+    
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-admin-notification`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': Deno.env.get('INTERNAL_API_KEY') || ''
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
       },
       body: JSON.stringify({ order, orderItems })
     })
     
     if (!response.ok) {
       const errorData = await response.json()
-      console.error('❌ Erreur API Route send-admin:', errorData)
-      throw new Error(`API route error: ${response.status} - ${errorData.error}`)
+      console.error('❌ Erreur Edge Function send-admin-notification:', errorData)
+      throw new Error(`Edge function error: ${response.status} - ${errorData.error}`)
     }
     
     const data = await response.json()
-    console.log('✅ API Route send-admin réussie:', data)
+    console.log('✅ Edge Function send-admin-notification réussie:', data)
     return data
   } catch (error) {
     console.error('❌ Erreur dans sendAdminNotificationEmail:', error)

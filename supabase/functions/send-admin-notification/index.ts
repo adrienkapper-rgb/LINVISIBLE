@@ -44,81 +44,105 @@ interface RequestBody {
 function generateAdminNotificationTemplate(order: OrderData, orderItems: OrderItem[]): string {
   const itemsHtml = orderItems.map(item => `
     <tr>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.product_name}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item.total.toFixed(2)}€</td>
+      <td style="padding: 10px; border-bottom: 1px solid #cbb9a8; color: #2d2316;">${item.product_name}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #cbb9a8; text-align: center; color: #2d2316;">${item.quantity}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #cbb9a8; text-align: right; color: #2d2316; font-weight: 500;">${item.total.toFixed(2)} €</td>
     </tr>
   `).join('')
 
   const deliveryInfo = order.delivery_type === 'point-relais' 
     ? `Point Relais: ${order.mondial_relay_point || 'À confirmer'}`
-    : `Adresse: ${order.delivery_address}, ${order.delivery_postal_code} ${order.delivery_city}, ${order.delivery_country}`
+    : `${order.delivery_address}, ${order.delivery_postal_code} ${order.delivery_city}, ${order.delivery_country}`
 
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Nouvelle commande - Admin</title>
+      <title>Nouvelle commande - Admin L'INVISIBLE</title>
     </head>
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-      <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #2d2316; margin: 0; padding: 0; background-color: #ddd0c4;">
+      <div style="max-width: 600px; margin: 20px auto; background: #e8dfd6; border: 1px solid #cbb9a8;">
         
-        <div style="background: #28a745; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-          <h1 style="margin: 0;">🎉 Nouvelle commande payée !</h1>
-          <p style="margin: 5px 0 0 0;">Commande #${order.order_number}</p>
+        <div style="background: #d4c4b8; color: #2d2316; padding: 25px; text-align: center;">
+          <h1 style="margin: 0; font-size: 20px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; font-family: Georgia, serif;">Nouvelle commande</h1>
+          <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">#${order.order_number}</p>
         </div>
 
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
-          <h3 style="margin: 0 0 15px 0;">👤 Informations client</h3>
-          <p><strong>Nom:</strong> ${order.first_name} ${order.last_name}</p>
-          <p><strong>Email:</strong> <a href="mailto:${order.email}">${order.email}</a></p>
-          <p><strong>Téléphone:</strong> ${order.phone}</p>
-        </div>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
-          <h3 style="margin: 0 0 15px 0;">📦 Livraison</h3>
-          <p><strong>Type:</strong> ${order.delivery_type === 'point-relais' ? 'Point Relais' : 'Domicile'}</p>
-          <p><strong>Détails:</strong> ${deliveryInfo}</p>
-        </div>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
-          <h3 style="margin: 0 0 15px 0;">🛒 Articles commandés</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background: #e9ecef;">
-                <th style="padding: 8px; text-align: left;">Produit</th>
-                <th style="padding: 8px; text-align: center;">Qté</th>
-                <th style="padding: 8px; text-align: right;">Total</th>
+        <div style="padding: 25px;">
+          
+          <div style="background: #f2ede7; padding: 20px; margin-bottom: 20px; border: 1px solid #cbb9a8;">
+            <h3 style="margin: 0 0 15px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #2d2316; border-bottom: 2px solid #d4c4b8; padding-bottom: 5px;">Informations client</h3>
+            <table style="width: 100%; font-size: 14px;">
+              <tr>
+                <td style="padding: 5px 0; width: 100px; color: #5c5245;">Nom:</td>
+                <td style="padding: 5px 0; color: #2d2316; font-weight: 500;">${order.first_name} ${order.last_name}</td>
               </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-        </div>
+              <tr>
+                <td style="padding: 5px 0; color: #5c5245;">Email:</td>
+                <td style="padding: 5px 0;"><a href="mailto:${order.email}" style="color: #2d2316; text-decoration: none; font-weight: 500;">${order.email}</a></td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #5c5245;">Téléphone:</td>
+                <td style="padding: 5px 0; color: #2d2316; font-weight: 500;">${order.phone}</td>
+              </tr>
+            </table>
+          </div>
 
-        <div style="background: #d1ecf1; padding: 20px; border-radius: 5px; margin: 20px 0;">
-          <h3 style="margin: 0 0 15px 0; color: #0c5460;">💰 Résumé financier</h3>
-          <p><strong>Sous-total:</strong> ${order.subtotal.toFixed(2)}€</p>
-          <p><strong>Livraison:</strong> ${order.shipping_cost.toFixed(2)}€</p>
-          <p style="font-size: 18px; font-weight: bold; color: #0c5460;"><strong>Total payé:</strong> ${order.total.toFixed(2)}€</p>
-        </div>
+          <div style="background: #f2ede7; padding: 20px; margin-bottom: 20px; border: 1px solid #cbb9a8;">
+            <h3 style="margin: 0 0 15px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #2d2316; border-bottom: 2px solid #d4c4b8; padding-bottom: 5px;">Livraison</h3>
+            <p style="margin: 0; font-size: 14px; color: #5c5245; line-height: 1.6;">
+              <strong style="color: #2d2316;">${order.delivery_type === 'point-relais' ? 'Point Relais' : 'Domicile'}</strong><br>
+              ${deliveryInfo}
+            </p>
+          </div>
 
-        <div style="background: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p style="margin: 0; color: #155724;"><strong>✅ Statut:</strong> Paiement validé - Commande à traiter</p>
-        </div>
+          <div style="background: #f2ede7; padding: 20px; margin-bottom: 20px; border: 1px solid #cbb9a8;">
+            <h3 style="margin: 0 0 15px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #2d2316; border-bottom: 2px solid #d4c4b8; padding-bottom: 5px;">Articles commandés</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; background: white;">
+              <thead>
+                <tr style="background: #d4c4b8;">
+                  <th style="padding: 10px; text-align: left; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; color: #2d2316;">Produit</th>
+                  <th style="padding: 10px; text-align: center; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; color: #2d2316;">Qté</th>
+                  <th style="padding: 10px; text-align: right; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; color: #2d2316;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+          </div>
 
-        <div style="text-align: center; margin: 30px 0; padding: 20px; background: #ffeaa7; border-radius: 5px;">
-          <p style="margin: 0; font-size: 16px; font-weight: bold;">⚡ Action requise</p>
-          <p style="margin: 5px 0 0 0;">Traiter cette commande dans le système de gestion</p>
-        </div>
+          <div style="background: #f2ede7; padding: 20px; margin-bottom: 20px; border: 1px solid #cbb9a8; border-left: 4px solid #d4c4b8;">
+            <h3 style="margin: 0 0 15px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #2d2316; font-family: Georgia, serif;">Résumé financier</h3>
+            <table style="width: 100%; font-size: 14px;">
+              <tr>
+                <td style="padding: 5px 0; color: #5c5245;">Sous-total:</td>
+                <td style="text-align: right; padding: 5px 0; color: #2d2316; font-weight: 500;">${order.subtotal.toFixed(2)} €</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #5c5245;">Livraison:</td>
+                <td style="text-align: right; padding: 5px 0; color: #2d2316; font-weight: 500;">${order.shipping_cost.toFixed(2)} €</td>
+              </tr>
+              <tr style="border-top: 2px solid #d4c4b8;">
+                <td style="padding: 15px 0 5px 0; font-size: 18px; font-weight: 600; color: #2d2316; text-transform: uppercase; letter-spacing: 1px;">Total payé:</td>
+                <td style="text-align: right; padding: 15px 0 5px 0; font-size: 18px; font-weight: 600; color: #2d2316;">${order.total.toFixed(2)} €</td>
+              </tr>
+            </table>
+          </div>
 
-        <hr style="margin: 30px 0;">
-        <p style="font-size: 12px; color: #666; text-align: center;">
-          Notification automatique - L'INVISIBLE Admin<br>
-          Commande passée le ${new Date(order.created_at).toLocaleString('fr-FR')}
-        </p>
+          <div style="background: #d4c4b8; color: #2d2316; padding: 20px; text-align: center; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500;">Action requise</p>
+            <p style="margin: 10px 0 0 0; font-size: 13px; opacity: 0.8;">Traiter cette commande dans le système de gestion</p>
+          </div>
+
+          <div style="text-align: center; padding-top: 20px; border-top: 1px solid #cbb9a8;">
+            <p style="font-size: 12px; color: #5c5245; margin: 0;">
+              Notification automatique - L'INVISIBLE<br>
+              <span style="opacity: 0.7;">${new Date(order.created_at).toLocaleString('fr-FR')}</span>
+            </p>
+          </div>
+        </div>
       </div>
     </body>
     </html>
@@ -160,14 +184,14 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    console.log(`📧 Envoi notification admin pour commande ${order.order_number}`)
-    console.log(`🎯 Admin: ${adminEmail}`)
-    console.log(`💰 Montant: ${order.total}€`)
+    console.log(`Envoi notification admin pour commande ${order.order_number}`)
+    console.log(`Admin: ${adminEmail}`)
+    console.log(`Montant: ${order.total} €`)
     
     const { data, error } = await resend.emails.send({
       from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [adminEmail],
-      subject: `🎉 Nouvelle commande payée #${order.order_number} - ${order.total.toFixed(2)}€`,
+      subject: `Nouvelle commande #${order.order_number} - ${order.total.toFixed(2)} €`,
       html: generateAdminNotificationTemplate(order, orderItems || []),
     })
 
@@ -184,11 +208,11 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    console.log(`✅ Email admin envoyé avec succès !`)
-    console.log(`📨 Email ID: ${data?.id}`)
-    console.log(`🛒 Commande: ${order.order_number}`)
-    console.log(`👤 Client: ${order.first_name} ${order.last_name}`)
-    console.log(`🎯 Admin: ${adminEmail}`)
+    console.log(`Email admin envoyé avec succès`)
+    console.log(`Email ID: ${data?.id}`)
+    console.log(`Commande: ${order.order_number}`)
+    console.log(`Client: ${order.first_name} ${order.last_name}`)
+    console.log(`Admin: ${adminEmail}`)
     
     return new Response(JSON.stringify({ 
       success: true, 

@@ -44,25 +44,26 @@ interface RequestBody {
 function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderItem[]): string {
   const itemsHtml = orderItems.map(item => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.product_name}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${item.product_price.toFixed(2)}€</td>
-      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${item.total.toFixed(2)}€</td>
+      <td style="padding: 12px; border-bottom: 1px solid #cbb9a8; color: #2d2316; font-family: Georgia, serif;">${item.product_name}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #cbb9a8; text-align: center; color: #2d2316;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #cbb9a8; text-align: right; color: #2d2316;">${item.product_price.toFixed(2)} €</td>
+      <td style="padding: 12px; border-bottom: 1px solid #cbb9a8; text-align: right; font-weight: 500; color: #2d2316;">${item.total.toFixed(2)} €</td>
     </tr>
   `).join('')
 
   const deliveryInfoHtml = order.delivery_type === 'point-relais' ? `
-    <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-      <h4 style="margin: 0 0 10px 0; color: #1976d2;">📦 Informations de livraison</h4>
-      <p style="margin: 0;"><strong>Point Relais:</strong> ${order.mondial_relay_point || 'À confirmer'}</p>
+    <div style="background: #f2ede7; padding: 25px; margin: 30px 0; border-left: 4px solid #d4c4b8;">
+      <h4 style="margin: 0 0 15px 0; color: #2d2316; font-family: Georgia, serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Livraison</h4>
+      <p style="margin: 0; color: #5c5245; font-size: 14px;"><strong style="color: #2d2316;">Point Relais</strong><br>${order.mondial_relay_point || 'À confirmer'}</p>
     </div>
   ` : `
-    <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-      <h4 style="margin: 0 0 10px 0; color: #1976d2;">🏠 Informations de livraison</h4>
-      <p style="margin: 5px 0;"><strong>Adresse:</strong><br>
+    <div style="background: #f2ede7; padding: 25px; margin: 30px 0; border-left: 4px solid #d4c4b8;">
+      <h4 style="margin: 0 0 15px 0; color: #2d2316; font-family: Georgia, serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Livraison</h4>
+      <p style="margin: 0; color: #5c5245; font-size: 14px; line-height: 1.6;">
       ${order.delivery_address}<br>
       ${order.delivery_postal_code} ${order.delivery_city}<br>
-      ${order.delivery_country}</p>
+      ${order.delivery_country}
+      </p>
     </div>
   `
 
@@ -72,33 +73,33 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Confirmation de commande</title>
+      <title>Confirmation de commande - L'INVISIBLE</title>
     </head>
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4;">
-      <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #2d2316; margin: 0; padding: 0; background-color: #ddd0c4;">
+      <div style="max-width: 600px; margin: 0 auto; background: #e8dfd6;">
         
         <!-- Header -->
-        <div style="background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 30px; text-align: center;">
-          <h1 style="margin: 0; font-size: 28px;">✅ Commande confirmée !</h1>
-          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Merci pour votre confiance</p>
+        <div style="background: #d4c4b8; color: #2d2316; padding: 40px 30px; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: 300; letter-spacing: 3px; font-family: Georgia, serif; text-transform: uppercase;">L'INVISIBLE</h1>
+          <p style="margin: 15px 0 0 0; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7;">Confirmation de commande</p>
         </div>
 
         <!-- Content -->
-        <div style="padding: 30px;">
-          <p style="font-size: 18px; margin: 0 0 20px 0;">Bonjour <strong>${order.first_name} ${order.last_name}</strong>,</p>
+        <div style="padding: 40px 30px;">
+          <p style="font-size: 16px; margin: 0 0 30px 0; color: #2d2316;">Bonjour ${order.first_name} ${order.last_name},</p>
           
-          <p style="margin: 0 0 25px 0;">Nous avons bien reçu votre commande <strong style="color: #1976d2;">#${order.order_number}</strong> et votre paiement a été validé avec succès.</p>
+          <p style="margin: 0 0 30px 0; color: #5c5245; line-height: 1.8;">Nous avons le plaisir de vous confirmer que votre commande <strong style="color: #2d2316;">#${order.order_number}</strong> a été enregistrée et votre paiement validé.</p>
           
           <!-- Order Details -->
-          <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 25px 0;">
-            <h3 style="margin: 0 0 20px 0; color: #1976d2;">📋 Détails de la commande</h3>
-            <table style="width: 100%; border-collapse: collapse;">
+          <div style="background: #f2ede7; padding: 30px; margin: 30px 0; border: 1px solid #cbb9a8;">
+            <h3 style="margin: 0 0 25px 0; color: #2d2316; font-family: Georgia, serif; font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #d4c4b8; padding-bottom: 10px;">Détails de la commande</h3>
+            <table style="width: 100%; border-collapse: collapse; background: white;">
               <thead>
-                <tr style="background: #e9ecef;">
-                  <th style="padding: 12px; text-align: left; font-weight: 600;">Produit</th>
-                  <th style="padding: 12px; text-align: center; font-weight: 600;">Quantité</th>
-                  <th style="padding: 12px; text-align: right; font-weight: 600;">Prix unitaire</th>
-                  <th style="padding: 12px; text-align: right; font-weight: 600;">Total</th>
+                <tr style="background: #d4c4b8;">
+                  <th style="padding: 12px; text-align: left; font-weight: 500; color: #2d2316; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Produit</th>
+                  <th style="padding: 12px; text-align: center; font-weight: 500; color: #2d2316; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Qté</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 500; color: #2d2316; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Prix</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 500; color: #2d2316; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,19 +107,19 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
               </tbody>
             </table>
             
-            <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #1976d2;">
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #d4c4b8; background: white; padding: 20px;">
               <table style="width: 100%;">
                 <tr>
-                  <td style="text-align: right; padding: 5px; font-size: 16px;"><strong>Sous-total:</strong></td>
-                  <td style="text-align: right; padding: 5px; width: 120px; font-size: 16px;">${order.subtotal.toFixed(2)}€</td>
+                  <td style="text-align: right; padding: 5px 0; color: #5c5245;">Sous-total</td>
+                  <td style="text-align: right; padding: 5px 0; width: 100px; color: #2d2316; font-weight: 500;">${order.subtotal.toFixed(2)} €</td>
                 </tr>
                 <tr>
-                  <td style="text-align: right; padding: 5px; font-size: 16px;"><strong>Livraison:</strong></td>
-                  <td style="text-align: right; padding: 5px; font-size: 16px;">${order.shipping_cost.toFixed(2)}€</td>
+                  <td style="text-align: right; padding: 5px 0; color: #5c5245;">Livraison</td>
+                  <td style="text-align: right; padding: 5px 0; color: #2d2316; font-weight: 500;">${order.shipping_cost.toFixed(2)} €</td>
                 </tr>
-                <tr style="background: #e3f2fd;">
-                  <td style="text-align: right; padding: 12px; font-size: 20px; font-weight: bold; color: #1976d2;"><strong>Total:</strong></td>
-                  <td style="text-align: right; padding: 12px; font-size: 20px; font-weight: bold; color: #1976d2;">${order.total.toFixed(2)}€</td>
+                <tr style="border-top: 2px solid #d4c4b8;">
+                  <td style="text-align: right; padding: 15px 0 5px 0; font-size: 18px; font-weight: 600; color: #2d2316; text-transform: uppercase; letter-spacing: 1px;">Total</td>
+                  <td style="text-align: right; padding: 15px 0 5px 0; font-size: 18px; font-weight: 600; color: #2d2316;">${order.total.toFixed(2)} €</td>
                 </tr>
               </table>
             </div>
@@ -126,23 +127,19 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
 
           ${deliveryInfoHtml}
 
-          <!-- Status -->
-          <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p style="margin: 0; color: #155724;"><strong>✅ Statut:</strong> Commande confirmée et paiement validé</p>
-          </div>
-
-          <p style="margin: 25px 0;">Votre commande sera traitée dans les plus brefs délais. Vous recevrez un email de suivi de livraison dès l'expédition.</p>
+          <p style="margin: 30px 0; color: #5c5245; line-height: 1.8; font-size: 14px;">Votre commande sera préparée avec le plus grand soin et expédiée dans les meilleurs délais. Un email de suivi vous sera envoyé dès l'expédition de votre colis.</p>
           
-          <div style="text-align: center; margin: 30px 0;">
-            <p style="margin: 0; color: #666;">Besoin d'aide ? Contactez-nous à <a href="mailto:contact@cocktails-linvisible.fr" style="color: #1976d2;">contact@cocktails-linvisible.fr</a></p>
+          <div style="margin: 40px 0; padding-top: 30px; border-top: 1px solid #cbb9a8; text-align: center;">
+            <p style="margin: 0; color: #5c5245; font-size: 13px;">Pour toute question, contactez-nous à<br>
+            <a href="mailto:contact@cocktails-linvisible.fr" style="color: #2d2316; text-decoration: none; font-weight: 500;">contact@cocktails-linvisible.fr</a></p>
           </div>
         </div>
         
         <!-- Footer -->
-        <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
-          <p style="margin: 0; font-size: 14px; color: #666;">
-            <strong>L'INVISIBLE</strong> - Cocktails premium<br>
-            Merci de votre confiance ! 🍸
+        <div style="background: #d4c4b8; padding: 30px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #2d2316; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8;">
+            L'INVISIBLE<br>
+            <span style="font-size: 11px; text-transform: none; letter-spacing: normal;">Cocktails d'exception</span>
           </p>
         </div>
       </div>
@@ -177,14 +174,14 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    console.log(`📧 Envoi email de confirmation pour commande ${order.order_number}`)
-    console.log(`🎯 Destinataire: ${order.email}`)
-    console.log(`👤 Client: ${order.first_name} ${order.last_name}`)
+    console.log(`Envoi email de confirmation pour commande ${order.order_number}`)
+    console.log(`Destinataire: ${order.email}`)
+    console.log(`Client: ${order.first_name} ${order.last_name}`)
     
     const { data, error } = await resend.emails.send({
       from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [order.email],
-      subject: `✅ Commande confirmée #${order.order_number} - L'INVISIBLE`,
+      subject: `Commande confirmée #${order.order_number} - L'INVISIBLE`,
       html: generateOrderConfirmationTemplate(order, orderItems || []),
     })
 
@@ -201,10 +198,10 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    console.log(`✅ Email de confirmation envoyé avec succès !`)
-    console.log(`📨 Email ID: ${data?.id}`)
-    console.log(`🛒 Commande: ${order.order_number}`)
-    console.log(`👤 Client: ${order.first_name} ${order.last_name} (${order.email})`)
+    console.log(`Email de confirmation envoyé avec succès`)
+    console.log(`Email ID: ${data?.id}`)
+    console.log(`Commande: ${order.order_number}`)
+    console.log(`Client: ${order.first_name} ${order.last_name} (${order.email})`)
     
     return new Response(JSON.stringify({ 
       success: true, 
