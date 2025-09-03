@@ -20,9 +20,6 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "L'invisible - Éditeur de cocktail",
   description: "Atelier artisanal dédié à l'art des cocktails, niché au cœur de Bordeaux",
-  icons: {
-    icon: '/favicon.png',
-  }
 };
 
 export default function RootLayout({
