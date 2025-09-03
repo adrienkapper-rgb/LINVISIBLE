@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, User, LogOut, Package } from "lucide-react";
+import { ShoppingCart, User, LogOut, Package, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/store";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
+import { useAdmin } from "@/hooks/use-admin";
 import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
@@ -22,6 +23,7 @@ export function Header() {
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   const { user, signOut } = useAuth();
   const { displayName } = useProfile();
+  const { isAdmin } = useAdmin();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -78,6 +80,17 @@ export function Header() {
                       Mes commandes
                     </Link>
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Administration
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />

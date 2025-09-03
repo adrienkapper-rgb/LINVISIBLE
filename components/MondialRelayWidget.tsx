@@ -1,13 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Search, Clock, Phone } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MapPin, Search, Clock, Phone, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { SUPPORTED_COUNTRIES } from '@/lib/shipping/mondial-relay-pricing'
+import { validatePostalCode, formatPostalCodeInput, getPostalFormat } from '@/lib/postal-formats'
 
 interface PointRelais {
   Num: string
@@ -25,17 +28,37 @@ interface MondialRelayWidgetProps {
   onPointSelected: (point: PointRelais) => void
   selectedPoint?: PointRelais | null
   countryCode?: string
+  autoOpen?: boolean
 }
 
-export function MondialRelayWidget({ onPointSelected, selectedPoint, countryCode = 'FR' }: MondialRelayWidgetProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function MondialRelayWidget({ onPointSelected, selectedPoint, countryCode = 'FR', autoOpen = false }: MondialRelayWidgetProps) {
+  const [isOpen, setIsOpen] = useState(autoOpen)
+  const [selectedCountryForPickup, setSelectedCountryForPickup] = useState(countryCode)
   const [searchData, setSearchData] = useState({
     codePostal: '',
     ville: ''
   })
   const [points, setPoints] = useState<PointRelais[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isValidPostalCode, setIsValidPostalCode] = useState(true)
   const { toast } = useToast()
+
+  // Filtrer les pays avec Point Relais disponible
+  const availableCountries = Object.values(SUPPORTED_COUNTRIES)
+    .filter(country => country.pointRelaisAvailable)
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  // Obtenir le format postal pour le pays sélectionné
+  const postalFormat = getPostalFormat(selectedCountryForPickup)
+
+  // Synchroniser le pays du widget avec le pays de facturation de l'utilisateur
+  useEffect(() => {
+    setSelectedCountryForPickup(countryCode);
+    // Réinitialiser la recherche quand le pays de facturation change
+    setPoints([]);
+    setSearchData({ codePostal: '', ville: '' });
+    setIsValidPostalCode(true);
+  }, [countryCode]);
 
   const searchPoints = async () => {
     if (!searchData.codePostal) {
@@ -56,7 +79,7 @@ export function MondialRelayWidget({ onPointSelected, selectedPoint, countryCode
         },
         body: JSON.stringify({
           ...searchData,
-          countryCode
+          countryCode: selectedCountryForPickup
         })
       })
 
@@ -131,15 +154,59 @@ export function MondialRelayWidget({ onPointSelected, selectedPoint, countryCode
             <CardTitle className="text-lg">Choisir un point relais</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Sélecteur de pays */}
+            <div>
+              <Label htmlFor="countryPickup">Pays de retrait *</Label>
+              <Select 
+                value={selectedCountryForPickup} 
+                onValueChange={(value) => {
+                  setSelectedCountryForPickup(value);
+                  // Réinitialiser les résultats quand le pays change
+                  setPoints([]);
+                  setSearchData({ codePostal: '', ville: '' });
+                  setIsValidPostalCode(true);
+                }}
+              >
+                <SelectTrigger id="countryPickup">
+                  <SelectValue placeholder="Sélectionnez un pays" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCountries.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="codePostal">Code postal *</Label>
+                <Label htmlFor="codePostal">
+                  Code postal *
+                  {postalFormat && (
+                    <span className="text-xs text-muted-foreground ml-1">
+                      ({postalFormat.description})
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="codePostal"
                   value={searchData.codePostal}
-                  onChange={(e) => setSearchData({...searchData, codePostal: e.target.value})}
-                  placeholder="33000"
+                  onChange={(e) => {
+                    const formatted = formatPostalCodeInput(e.target.value, selectedCountryForPickup);
+                    setSearchData({...searchData, codePostal: formatted});
+                    setIsValidPostalCode(validatePostalCode(formatted, selectedCountryForPickup));
+                  }}
+                  placeholder={postalFormat?.placeholder || "Code postal"}
+                  maxLength={postalFormat?.maxLength || 10}
+                  className={!isValidPostalCode && searchData.codePostal ? 'border-red-500' : ''}
                 />
+                {!isValidPostalCode && searchData.codePostal && postalFormat && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Format attendu : {postalFormat.example}
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="ville">Ville (optionnel)</Label>
@@ -147,18 +214,22 @@ export function MondialRelayWidget({ onPointSelected, selectedPoint, countryCode
                   id="ville"
                   value={searchData.ville}
                   onChange={(e) => setSearchData({...searchData, ville: e.target.value})}
-                  placeholder="Bordeaux"
+                  placeholder={selectedCountryForPickup === 'FR' ? 'Bordeaux' : selectedCountryForPickup === 'BE' ? 'Bruxelles' : selectedCountryForPickup === 'ES' ? 'Madrid' : selectedCountryForPickup === 'LU' ? 'Luxembourg' : selectedCountryForPickup === 'NL' ? 'Amsterdam' : 'Ville'}
                 />
               </div>
             </div>
             
             <Button 
               onClick={searchPoints}
-              disabled={isLoading || !searchData.codePostal}
+              disabled={isLoading || !searchData.codePostal || !isValidPostalCode}
               className="w-full"
             >
-              <Search className="mr-2 h-4 w-4" />
-              {isLoading ? "Recherche..." : "Rechercher des points relais"}
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="mr-2 h-4 w-4" />
+              )}
+              {isLoading ? "Recherche en cours..." : "Rechercher des points relais"}
             </Button>
 
             {points.length > 0 && (
@@ -202,7 +273,7 @@ export function MondialRelayWidget({ onPointSelected, selectedPoint, countryCode
       <div className="text-sm text-muted-foreground">
         <p>• Livraison sous 3-5 jours ouvrés</p>
         <p>• Retrait gratuit en point relais</p>
-        <p>• Disponible dans toute la France</p>
+        <p>• Disponible dans {availableCountries.length} pays européens</p>
       </div>
     </div>
   )

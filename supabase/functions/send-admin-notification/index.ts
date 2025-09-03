@@ -41,6 +41,12 @@ interface RequestBody {
   orderItems: OrderItem[]
 }
 
+function formatAddressForEmail(address: string | null | undefined): string {
+  if (!address) return 'À confirmer';
+  // Remplacer les retours à la ligne par des <br> HTML
+  return address.replace(/\n/g, '<br>');
+}
+
 function generateAdminNotificationTemplate(order: OrderData, orderItems: OrderItem[]): string {
   const itemsHtml = orderItems.map(item => `
     <tr>
@@ -51,7 +57,7 @@ function generateAdminNotificationTemplate(order: OrderData, orderItems: OrderIt
   `).join('')
 
   const deliveryInfo = order.delivery_type === 'point-relais' 
-    ? `Point Relais: ${order.mondial_relay_point || 'À confirmer'}`
+    ? formatAddressForEmail(order.mondial_relay_point)
     : `${order.delivery_address}, ${order.delivery_postal_code} ${order.delivery_city}, ${order.delivery_country}`
 
   return `

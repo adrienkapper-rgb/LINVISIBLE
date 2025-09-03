@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn, signUp } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,7 +16,10 @@ export default function ConnexionPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState('FR')
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
+  
+  const redirectTo = searchParams.get('redirect') || '/'
 
   const handleAccountTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const companyField = document.getElementById('company-field')
@@ -51,7 +54,7 @@ export default function ConnexionPage() {
           description: "Vous êtes maintenant connecté"
         })
         setTimeout(() => {
-          window.location.href = '/'
+          window.location.href = redirectTo
         }, 500)
       }
     } catch (error) {
@@ -82,7 +85,7 @@ export default function ConnexionPage() {
           description: `Bonjour ${firstName}, votre compte a été créé avec succès. Vous êtes maintenant connecté.`
         })
         setTimeout(() => {
-          window.location.href = '/'
+          window.location.href = redirectTo
         }, 1500)
       }
     } catch (error) {
@@ -101,6 +104,7 @@ export default function ConnexionPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-serif">L'invisible</CardTitle>
           <CardDescription>
+            {redirectTo === '/checkout' ? 'Connectez-vous pour finaliser votre commande' : ''}
           </CardDescription>
         </CardHeader>
         <CardContent>

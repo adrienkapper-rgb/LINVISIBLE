@@ -19,7 +19,7 @@ import { calculateTotalWeight, getShippingInfo, validatePackageWeight, SUPPORTED
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CheckoutFormProps {
-  user?: {
+  user: {
     id: string;
     email: string;
     firstName?: string;
@@ -29,7 +29,7 @@ interface CheckoutFormProps {
     city?: string;
     postalCode?: string;
     countryCode?: string;
-  } | null;
+  };
 }
 
 export function CheckoutForm({ user }: CheckoutFormProps) {
@@ -38,7 +38,6 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [createAccount, setCreateAccount] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   
@@ -59,23 +58,21 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
   const [selectedCountry, setSelectedCountry] = useState((user?.countryCode || 'FR').toUpperCase());
   const [preferPointRelais, setPreferPointRelais] = useState(true);
 
-  // Mettre à jour automatiquement les champs si les données utilisateur changent
+  // Mettre à jour automatiquement les champs avec les données utilisateur
   useEffect(() => {
-    if (user) {
-      setFormData(prevData => ({
-        ...prevData,
-        email: user.email || prevData.email,
-        firstName: user.firstName || prevData.firstName,
-        lastName: user.lastName || prevData.lastName,
-        phone: user.phone || prevData.phone,
-        address: user.address || prevData.address,
-        city: user.city || prevData.city,
-        postalCode: user.postalCode || prevData.postalCode,
-        country: user.countryCode || prevData.country,
-      }));
-      if (user.countryCode) {
-        setSelectedCountry(user.countryCode.toUpperCase());
-      }
+    setFormData(prevData => ({
+      ...prevData,
+      email: user.email || prevData.email,
+      firstName: user.firstName || prevData.firstName,
+      lastName: user.lastName || prevData.lastName,
+      phone: user.phone || prevData.phone,
+      address: user.address || prevData.address,
+      city: user.city || prevData.city,
+      postalCode: user.postalCode || prevData.postalCode,
+      country: user.countryCode || prevData.country,
+    }));
+    if (user.countryCode) {
+      setSelectedCountry(user.countryCode.toUpperCase());
     }
   }, [user]);
 
@@ -134,32 +131,30 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
       return;
     }
 
-    // Sauvegarder les infos utilisateur si connecté
-    if (user) {
-      try {
-        const saveData: any = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          postalCode: formData.postalCode,
-          countryCode: selectedCountry,
-        };
+    // Sauvegarder les infos utilisateur
+    try {
+      const saveData: any = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        countryCode: selectedCountry,
+      };
 
-        const result = await saveUserInfo(saveData);
-        
-        if (result.error) {
-          console.error('Erreur sauvegarde utilisateur:', result.error);
-          toast({
-            title: "Avertissement",
-            description: "Les informations de contact n'ont pas pu être sauvegardées pour les prochaines commandes.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error('Erreur sauvegarde utilisateur:', error);
+      const result = await saveUserInfo(saveData);
+      
+      if (result.error) {
+        console.error('Erreur sauvegarde utilisateur:', result.error);
+        toast({
+          title: "Avertissement",
+          description: "Les informations de contact n'ont pas pu être sauvegardées pour les prochaines commandes.",
+          variant: "destructive",
+        });
       }
+    } catch (error) {
+      console.error('Erreur sauvegarde utilisateur:', error);
     }
 
     setShowPayment(true);
@@ -191,8 +186,6 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
   };
 
   const handleSaveInfo = async () => {
-    if (!user) return;
-    
     try {
       const result = await saveUserInfo({
         firstName: formData.firstName,
@@ -238,11 +231,28 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
     }
   };
 
+  // Formater l'adresse complète du point relais
+  const formatRelayPointAddress = (point: any): string => {
+    let address = point.LgAdr1; // Nom du commerce
+    
+    if (point.LgAdr3) {
+      address += `\n${point.LgAdr3}`; // Adresse rue sur nouvelle ligne
+    }
+    
+    if (point.LgAdr2) {
+      address += `\n${point.LgAdr2}`; // Info supplémentaire sur nouvelle ligne
+    }
+    
+    address += `\n${point.CP} ${point.Ville}`; // Code postal + ville sur nouvelle ligne
+    
+    return address;
+  };
+
   const handleRelayPointSelection = (point: any) => {
     setSelectedRelayPoint(point);
     setFormData({
       ...formData,
-      mondialRelayPoint: `${point.LgAdr1} - ${point.CP} ${point.Ville}`,
+      mondialRelayPoint: formatRelayPointAddress(point),
     });
   };
 
@@ -286,26 +296,24 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                     <Package className="h-5 w-5" />
                     Informations de contact
                   </div>
-                  {user && (
-                    <Button
-                      type="button"
-                      variant={isEditingInfo ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => isEditingInfo ? handleSaveInfo() : setIsEditingInfo(true)}
-                    >
-                      {isEditingInfo ? (
-                        <>
-                          <Save className="h-4 w-4 mr-1" />
-                          Enregistrer
-                        </>
-                      ) : (
-                        <>
-                          <Edit2 className="h-4 w-4 mr-1" />
-                          Modifier
-                        </>
-                      )}
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant={isEditingInfo ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => isEditingInfo ? handleSaveInfo() : setIsEditingInfo(true)}
+                  >
+                    {isEditingInfo ? (
+                      <>
+                        <Save className="h-4 w-4 mr-1" />
+                        Enregistrer
+                      </>
+                    ) : (
+                      <>
+                        <Edit2 className="h-4 w-4 mr-1" />
+                        Modifier
+                      </>
+                    )}
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -319,7 +327,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                       type="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      disabled={!!user}
+                      disabled={true}
                       required
                     />
                   </div>
@@ -333,7 +341,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        disabled={user && !isEditingInfo}
+                        disabled={!isEditingInfo}
                         placeholder="Votre prénom"
                         required
                       />
@@ -345,7 +353,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        disabled={user && !isEditingInfo}
+                        disabled={!isEditingInfo}
                         placeholder="Votre nom"
                         required
                       />
@@ -361,7 +369,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                       type="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      disabled={user && !isEditingInfo}
+                      disabled={!isEditingInfo}
                       placeholder="Votre numéro de téléphone"
                       required
                     />
@@ -375,7 +383,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
-                      disabled={user && !isEditingInfo}
+                      disabled={!isEditingInfo}
                       placeholder="Numéro et nom de rue"
                       required
                     />
@@ -390,7 +398,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                         name="postalCode"
                         value={formData.postalCode}
                         onChange={handleInputChange}
-                        disabled={user && !isEditingInfo}
+                        disabled={!isEditingInfo}
                         placeholder="Code postal"
                         required
                       />
@@ -402,7 +410,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                         name="city"
                         value={formData.city}
                         onChange={handleInputChange}
-                        disabled={user && !isEditingInfo}
+                        disabled={!isEditingInfo}
                         placeholder="Ville"
                         required
                       />
@@ -415,7 +423,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                     <Select 
                       value={selectedCountry} 
                       onValueChange={handleCountryChange}
-                      disabled={user && !isEditingInfo}
+                      disabled={!isEditingInfo}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionnez un pays" />
@@ -503,6 +511,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                     onPointSelected={handleRelayPointSelection}
                     selectedPoint={selectedRelayPoint}
                     countryCode={selectedCountry}
+                    autoOpen={true}
                   />
                 )}
 
@@ -530,19 +539,6 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                     J'accepte les conditions générales de vente *
                   </Label>
                 </div>
-                
-                {!user && (
-                  <div className="flex items-start space-x-2">
-                    <Checkbox 
-                      id="account" 
-                      checked={createAccount}
-                      onCheckedChange={(checked) => setCreateAccount(checked as boolean)}
-                    />
-                    <Label htmlFor="account" className="text-sm leading-relaxed">
-                      Créer un compte pour faciliter mes prochaines commandes
-                    </Label>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>

@@ -41,6 +41,12 @@ interface RequestBody {
   orderItems: OrderItem[]
 }
 
+function formatAddressForEmail(address: string | null | undefined): string {
+  if (!address) return 'À confirmer';
+  // Remplacer les retours à la ligne par des <br> HTML
+  return address.replace(/\n/g, '<br>');
+}
+
 function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderItem[]): string {
   const itemsHtml = orderItems.map(item => `
     <tr>
@@ -54,7 +60,7 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
   const deliveryInfoHtml = order.delivery_type === 'point-relais' ? `
     <div style="background: #f2ede7; padding: 25px; margin: 30px 0; border-left: 4px solid #d4c4b8;">
       <h4 style="margin: 0 0 15px 0; color: #2d2316; font-family: Georgia, serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Livraison</h4>
-      <p style="margin: 0; color: #5c5245; font-size: 14px;"><strong style="color: #2d2316;">Point Relais</strong><br>${order.mondial_relay_point || 'À confirmer'}</p>
+      <p style="margin: 0; color: #5c5245; font-size: 14px;"><strong style="color: #2d2316;">Point Relais</strong><br>${formatAddressForEmail(order.mondial_relay_point)}</p>
     </div>
   ` : `
     <div style="background: #f2ede7; padding: 25px; margin: 30px 0; border-left: 4px solid #d4c4b8;">
