@@ -134,7 +134,7 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
           <p style="margin: 25px 0;">Votre commande sera traitée dans les plus brefs délais. Vous recevrez un email de suivi de livraison dès l'expédition.</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <p style="margin: 0; color: #666;">Besoin d'aide ? Contactez-nous à <a href="mailto:contact@linvisible.fr" style="color: #1976d2;">contact@linvisible.fr</a></p>
+            <p style="margin: 0; color: #666;">Besoin d'aide ? Contactez-nous à <a href="mailto:contact@cocktails-linvisible.fr" style="color: #1976d2;">contact@cocktails-linvisible.fr</a></p>
           </div>
         </div>
         
@@ -182,7 +182,7 @@ Deno.serve(async (req: Request) => {
     console.log(`👤 Client: ${order.first_name} ${order.last_name}`)
     
     const { data, error } = await resend.emails.send({
-      from: 'L\'INVISIBLE <noreply@linvisible.fr>',
+      from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [order.email],
       subject: `✅ Commande confirmée #${order.order_number} - L'INVISIBLE`,
       html: generateOrderConfirmationTemplate(order, orderItems || []),

@@ -165,7 +165,7 @@ Deno.serve(async (req: Request) => {
     console.log(`💰 Montant: ${order.total}€`)
     
     const { data, error } = await resend.emails.send({
-      from: 'L\'INVISIBLE <noreply@linvisible.fr>',
+      from: 'L\'INVISIBLE <noreply@cocktails-linvisible.fr>',
       to: [adminEmail],
       subject: `🎉 Nouvelle commande payée #${order.order_number} - ${order.total.toFixed(2)}€`,
       html: generateAdminNotificationTemplate(order, orderItems || []),

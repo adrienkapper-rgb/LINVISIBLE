@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 import { updateOrderStatus, getOrderItems } from '@/lib/api/orders'
-import { sendOrderConfirmationEmail, sendAdminNotificationEmail, sendPaymentConfirmationEmail } from '@/lib/email/service'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil'
@@ -84,18 +83,8 @@ export async function POST(request: NextRequest) {
                   .insert(paymentData)
               }
               
-              // Envoyer les emails s'ils n'ont pas été envoyés
-              try {
-                const orderItems = await getOrderItems(order.id)
-                
-                await sendOrderConfirmationEmail({ order, orderItems })
-                await sendAdminNotificationEmail({ order, orderItems })
-                await sendPaymentConfirmationEmail({ order, orderItems })
-                
-                console.log(`📧 Emails envoyés pour ${order.order_number}`)
-              } catch (emailError) {
-                console.error(`⚠️ Erreur envoi emails pour ${order.order_number}:`, emailError)
-              }
+              // Les emails seront envoyés par le webhook Stripe via Edge Functions
+              console.log(`📧 Emails gérés par le webhook Stripe pour ${order.order_number}`)
               
               results.synchronized++
               console.log(`✅ Commande ${order.order_number} synchronisée`)
