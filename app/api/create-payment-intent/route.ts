@@ -28,7 +28,11 @@ export async function POST(request: NextRequest) {
       subtotal,
       shippingCost,
       total,
-      idempotencyKey
+      idempotencyKey,
+      // Champs pour les cadeaux
+      isGift,
+      recipientFirstName,
+      recipientLastName
     } = body
     
     // Validation des données requises
@@ -82,7 +86,11 @@ export async function POST(request: NextRequest) {
         subtotal: Number(subtotal),
         shipping_cost: Number(shippingCost),
         total: Number(total),
-        status: 'pending'
+        status: 'pending',
+        // Champs pour les cadeaux
+        is_gift: isGift || false,
+        recipient_first_name: recipientFirstName || null,
+        recipient_last_name: recipientLastName || null
       })
       .select()
       .single()

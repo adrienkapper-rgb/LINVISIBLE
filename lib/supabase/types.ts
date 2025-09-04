@@ -264,6 +264,9 @@ export interface Database {
           total: number
           status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
           stripe_payment_intent_id: string | null
+          is_gift: boolean
+          recipient_first_name: string | null
+          recipient_last_name: string | null
           created_at: string
           updated_at: string
         }
@@ -286,6 +289,9 @@ export interface Database {
           total: number
           status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
           stripe_payment_intent_id?: string | null
+          is_gift?: boolean
+          recipient_first_name?: string | null
+          recipient_last_name?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -308,6 +314,9 @@ export interface Database {
           total?: number
           status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
           stripe_payment_intent_id?: string | null
+          is_gift?: boolean
+          recipient_first_name?: string | null
+          recipient_last_name?: string | null
           created_at?: string
           updated_at?: string
         }

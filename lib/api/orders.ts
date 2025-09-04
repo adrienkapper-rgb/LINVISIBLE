@@ -24,6 +24,10 @@ interface CreateOrderData {
   subtotal: number
   shippingCost: number
   total: number
+  // Champs pour les cadeaux
+  isGift?: boolean
+  recipientFirstName?: string
+  recipientLastName?: string
 }
 
 export async function createOrder(orderData: CreateOrderData): Promise<{ order: Order | null, error: any }> {
@@ -50,7 +54,11 @@ export async function createOrder(orderData: CreateOrderData): Promise<{ order: 
       subtotal: Number(orderData.subtotal),
       shipping_cost: Number(orderData.shippingCost),
       total: Number(orderData.total),
-      status: 'pending'
+      status: 'pending',
+      // Champs pour les cadeaux
+      is_gift: orderData.isGift || false,
+      recipient_first_name: orderData.recipientFirstName || null,
+      recipient_last_name: orderData.recipientLastName || null
     }
     
     

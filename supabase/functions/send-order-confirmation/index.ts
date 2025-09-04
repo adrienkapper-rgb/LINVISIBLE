@@ -25,6 +25,10 @@ interface OrderData {
   total: number
   status: string
   created_at: string
+  // Nouveaux champs pour les cadeaux
+  is_gift?: boolean
+  recipient_first_name?: string
+  recipient_last_name?: string
 }
 
 interface OrderItem {
@@ -59,16 +63,25 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
 
   const deliveryInfoHtml = order.delivery_type === 'point-relais' ? `
     <div style="background: #f2ede7; padding: 25px; margin: 30px 0; border-left: 4px solid #d4c4b8;">
-      <h4 style="margin: 0 0 15px 0; color: #2d2316; font-family: Georgia, serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Livraison</h4>
-      <p style="margin: 0; color: #5c5245; font-size: 14px;"><strong style="color: #2d2316;">Point Relais</strong><br>${formatAddressForEmail(order.mondial_relay_point)}</p>
+      <h4 style="margin: 0 0 15px 0; color: #2d2316; font-family: Georgia, serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
+        ${order.is_gift ? '🎁 Livraison du cadeau' : 'Livraison'}
+      </h4>
+      <p style="margin: 0; color: #5c5245; font-size: 14px;">
+        <strong style="color: #2d2316;">Point Relais</strong><br>
+        ${formatAddressForEmail(order.mondial_relay_point)}
+        ${order.is_gift && order.recipient_first_name ? `<br><br><em>À retirer par ${order.recipient_first_name} ${order.recipient_last_name} (ou son représentant)</em>` : ''}
+      </p>
     </div>
   ` : `
     <div style="background: #f2ede7; padding: 25px; margin: 30px 0; border-left: 4px solid #d4c4b8;">
-      <h4 style="margin: 0 0 15px 0; color: #2d2316; font-family: Georgia, serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Livraison</h4>
+      <h4 style="margin: 0 0 15px 0; color: #2d2316; font-family: Georgia, serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
+        ${order.is_gift ? '🎁 Livraison du cadeau' : 'Livraison'}
+      </h4>
       <p style="margin: 0; color: #5c5245; font-size: 14px; line-height: 1.6;">
       ${order.delivery_address}<br>
       ${order.delivery_postal_code} ${order.delivery_city}<br>
       ${order.delivery_country}
+      ${order.is_gift && order.recipient_first_name ? `<br><br><em>Destinataire : ${order.recipient_first_name} ${order.recipient_last_name}</em>` : ''}
       </p>
     </div>
   `
@@ -93,6 +106,17 @@ function generateOrderConfirmationTemplate(order: OrderData, orderItems: OrderIt
         <!-- Content -->
         <div style="padding: 40px 30px;">
           <p style="font-size: 16px; margin: 0 0 30px 0; color: #2d2316;">Bonjour ${order.first_name} ${order.last_name},</p>
+          
+          ${order.is_gift && order.recipient_first_name && order.recipient_last_name ? `
+            <div style="background: linear-gradient(135deg, #f7f1e8 0%, #f2ede7 100%); padding: 25px; margin: 20px 0; border: 2px solid #d4c4b8; border-radius: 8px; text-align: center;">
+              <p style="margin: 0; font-size: 18px; color: #2d2316; font-family: Georgia, serif;">
+                🎁 <strong>Cette commande est un cadeau</strong>
+              </p>
+              <p style="margin: 10px 0 0 0; font-size: 16px; color: #5c5245;">
+                Destinataire : <strong style="color: #2d2316;">${order.recipient_first_name} ${order.recipient_last_name}</strong>
+              </p>
+            </div>
+          ` : ''}
           
           <p style="margin: 0 0 30px 0; color: #5c5245; line-height: 1.8;">Nous avons le plaisir de vous confirmer que votre commande <strong style="color: #2d2316;">#${order.order_number}</strong> a été enregistrée et votre paiement validé.</p>
           

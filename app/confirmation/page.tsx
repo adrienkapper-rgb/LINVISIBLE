@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Package, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle, Package, Mail, ArrowRight, Loader2, Gift } from "lucide-react";
 import { getOrderByNumber, getOrderItems, getOrderByPaymentIntent } from "@/lib/api/orders";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -105,6 +105,18 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
                 <p className="text-sm text-muted-foreground">{order.phone}</p>
               </div>
 
+              {order.is_gift && order.recipient_first_name && order.recipient_last_name && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Gift className="h-5 w-5 text-blue-600" />
+                    <p className="font-medium text-blue-900">Cette commande est un cadeau</p>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    Destinataire : <span className="font-medium">{order.recipient_first_name} {order.recipient_last_name}</span>
+                  </p>
+                </div>
+              )}
+
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Articles commandés</p>
                 <div className="space-y-2">
@@ -127,22 +139,36 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
                   <div>
                     {order.delivery_type === 'point-relais' ? (
                       <>
-                        <p className="font-medium mb-1">Point Relais</p>
+                        <p className="font-medium mb-1">
+                          {order.is_gift ? "Point Relais (Cadeau)" : "Point Relais"}
+                        </p>
                         <p className="text-sm text-muted-foreground mb-1">
                           Lieu : {order.mondial_relay_point}
                         </p>
+                        {order.is_gift && order.recipient_first_name && (
+                          <p className="text-sm text-muted-foreground mb-1">
+                            À retirer par {order.recipient_first_name} {order.recipient_last_name}
+                          </p>
+                        )}
                         <p className="text-sm text-muted-foreground">
                           Disponible dans 3-4 jours ouvrés
                         </p>
                       </>
                     ) : (
                       <>
-                        <p className="font-medium mb-1">Livraison à domicile</p>
+                        <p className="font-medium mb-1">
+                          {order.is_gift ? "Livraison à domicile (Cadeau)" : "Livraison à domicile"}
+                        </p>
                         <div className="text-sm text-muted-foreground mb-1">
                           <p>{order.delivery_address}</p>
                           <p>{order.delivery_postal_code} {order.delivery_city}</p>
                           {order.delivery_country !== 'FR' && (
                             <p>{order.delivery_country}</p>
+                          )}
+                          {order.is_gift && order.recipient_first_name && (
+                            <p className="font-medium text-foreground mt-1">
+                              Destinataire : {order.recipient_first_name} {order.recipient_last_name}
+                            </p>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">

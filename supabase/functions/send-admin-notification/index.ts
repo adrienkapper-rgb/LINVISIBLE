@@ -25,6 +25,10 @@ interface OrderData {
   total: number
   status: string
   created_at: string
+  // Champs pour les cadeaux
+  is_gift?: boolean
+  recipient_first_name?: string
+  recipient_last_name?: string
 }
 
 interface OrderItem {
@@ -92,6 +96,15 @@ function generateAdminNotificationTemplate(order: OrderData, orderItems: OrderIt
                 <td style="padding: 5px 0; color: #5c5245;">Téléphone:</td>
                 <td style="padding: 5px 0; color: #2d2316; font-weight: 500;">${order.phone}</td>
               </tr>
+              ${order.is_gift && order.recipient_first_name && order.recipient_last_name ? `
+              <tr>
+                <td style="padding: 10px 0 5px 0; color: #2d2316; font-weight: 600;" colspan="2">🎁 Cadeau pour:</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0; color: #5c5245;">Destinataire:</td>
+                <td style="padding: 5px 0; color: #2d2316; font-weight: 500;">${order.recipient_first_name} ${order.recipient_last_name}</td>
+              </tr>
+              ` : ''}
             </table>
           </div>
 

@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/lib/store";
 import { StripePayment } from "@/components/StripePayment";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Package, CreditCard, AlertCircle, Globe, Edit2, Save } from "lucide-react";
+import { MapPin, Package, CreditCard, AlertCircle, Globe, Edit2, Save, Gift } from "lucide-react";
 import { saveUserInfo } from "@/app/actions/user";
 import { MondialRelayWidget } from "@/components/MondialRelayWidget";
 import { calculateTotalWeight, getShippingInfo, validatePackageWeight, SUPPORTED_COUNTRIES, getAvailableServices } from "@/lib/shipping/mondial-relay-pricing";
@@ -57,6 +57,18 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
   const [selectedRelayPoint, setSelectedRelayPoint] = useState<any>(null);
   const [selectedCountry, setSelectedCountry] = useState((user?.countryCode || 'FR').toUpperCase());
   const [preferPointRelais, setPreferPointRelais] = useState(true);
+  
+  // États pour la fonctionnalité destinataire
+  const [isGift, setIsGift] = useState(false);
+  const [recipientData, setRecipientData] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    address: "",
+    city: "",
+    postalCode: "",
+    country: "FR",
+  });
 
   // Mettre à jour automatiquement les champs avec les données utilisateur
   useEffect(() => {
@@ -76,18 +88,21 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
     }
   }, [user]);
 
+  // Obtenir le pays effectif (utilisateur ou destinataire)
+  const effectiveCountry = isGift ? recipientData.country : selectedCountry;
+  
   // Obtenir les services disponibles pour le pays sélectionné
-  const availableServices = getAvailableServices(selectedCountry);
+  const availableServices = getAvailableServices(effectiveCountry);
   
   // Calcul dynamique du poids et du tarif
   const totalWeight = calculateTotalWeight(items);
-  const shippingInfo = getShippingInfo(totalWeight, selectedCountry, preferPointRelais && availableServices.pointRelais);
+  const shippingInfo = getShippingInfo(totalWeight, effectiveCountry, preferPointRelais && availableServices.pointRelais);
   const shippingCost = shippingInfo.cost;
   const subtotal = getTotalPrice();
   const total = subtotal + shippingCost;
   
   // Validation du poids pour le pays sélectionné
-  const weightValidation = validatePackageWeight(totalWeight, selectedCountry);
+  const weightValidation = validatePackageWeight(totalWeight, effectiveCountry);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,14 +136,27 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
       return;
     }
 
-    // Vérifier que toutes les informations de contact sont remplies
-    if (!formData.address.trim() || !formData.postalCode.trim() || !formData.city.trim()) {
+    // Vérifier que toutes les informations de livraison sont remplies
+    const deliveryData = isGift ? recipientData : formData;
+    if (!deliveryData.address.trim() || !deliveryData.postalCode.trim() || !deliveryData.city.trim()) {
       toast({
         title: "Erreur",
-        description: "Veuillez renseigner une adresse complète dans vos informations de contact",
+        description: `Veuillez renseigner une adresse complète pour ${isGift ? 'le destinataire' : 'vos informations de contact'}`,
         variant: "destructive",
       });
       return;
+    }
+
+    // Vérifier les autres champs requis pour les cadeaux
+    if (isGift) {
+      if (!recipientData.firstName.trim() || !recipientData.lastName.trim() || !recipientData.phone.trim()) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez renseigner toutes les informations du destinataire",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Sauvegarder les infos utilisateur
@@ -181,6 +209,13 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleRecipientInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRecipientData({
+      ...recipientData,
       [e.target.name]: e.target.value,
     });
   };
@@ -258,14 +293,26 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
 
   // Déterminer si on peut procéder au paiement selon le mode de livraison
   const canProceedToPayment = () => {
+    const deliveryData = isGift ? recipientData : formData;
+    
     if (preferPointRelais && availableServices.pointRelais) {
       // Mode Point Relais : un point doit être sélectionné
       return selectedRelayPoint !== null;
     } else {
       // Mode Livraison à domicile : adresse complète requise
-      return formData.address.trim() !== '' && 
-             formData.postalCode.trim() !== '' && 
-             formData.city.trim() !== '';
+      const hasCompleteAddress = deliveryData.address.trim() !== '' && 
+                                 deliveryData.postalCode.trim() !== '' && 
+                                 deliveryData.city.trim() !== '';
+      
+      // Pour les cadeaux, vérifier aussi les autres champs
+      if (isGift) {
+        return hasCompleteAddress && 
+               recipientData.firstName.trim() !== '' && 
+               recipientData.lastName.trim() !== '' && 
+               recipientData.phone.trim() !== '';
+      }
+      
+      return hasCompleteAddress;
     }
   };
 
@@ -288,13 +335,13 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Contact Information */}
+            {/* Recipient Information */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Package className="h-5 w-5" />
-                    Informations de contact
+                    Destinataire
                   </div>
                   <Button
                     type="button"
@@ -317,127 +364,288 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4">
-                  {/* Email */}
-                  <div>
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      disabled={true}
-                      required
-                    />
-                  </div>
-
-                  {/* Prénom et Nom */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">Prénom *</Label>
-                      <Input
-                        id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        disabled={!isEditingInfo}
-                        placeholder="Votre prénom"
-                        required
+                {/* Sélection du destinataire */}
+                <div>
+                  <Label className="text-sm font-medium mb-3 block">Pour qui est cette commande ?</Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="for-me"
+                        name="recipient-type"
+                        checked={!isGift}
+                        onChange={() => {
+                          setIsGift(false);
+                          setSelectedCountry((user?.countryCode || 'FR').toUpperCase());
+                          setSelectedRelayPoint(null);
+                        }}
                       />
+                      <Label htmlFor="for-me" className="text-sm">
+                        Pour moi-même
+                      </Label>
                     </div>
-                    <div>
-                      <Label htmlFor="lastName">Nom *</Label>
-                      <Input
-                        id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        disabled={!isEditingInfo}
-                        placeholder="Votre nom"
-                        required
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="for-someone-else"
+                        name="recipient-type"
+                        checked={isGift}
+                        onChange={() => {
+                          setIsGift(true);
+                          setSelectedCountry(recipientData.country);
+                          setSelectedRelayPoint(null);
+                        }}
                       />
+                      <Label htmlFor="for-someone-else" className="text-sm flex items-center gap-1">
+                        <Gift className="h-4 w-4" />
+                        Pour quelqu'un d'autre (cadeau)
+                      </Label>
                     </div>
-                  </div>
-
-                  {/* Téléphone */}
-                  <div>
-                    <Label htmlFor="phone">Téléphone *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      disabled={!isEditingInfo}
-                      placeholder="Votre numéro de téléphone"
-                      required
-                    />
-                  </div>
-
-                  {/* Adresse */}
-                  <div>
-                    <Label htmlFor="address">Adresse *</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      disabled={!isEditingInfo}
-                      placeholder="Numéro et nom de rue"
-                      required
-                    />
-                  </div>
-
-                  {/* Code postal et Ville */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="postalCode">Code postal *</Label>
-                      <Input
-                        id="postalCode"
-                        name="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleInputChange}
-                        disabled={!isEditingInfo}
-                        placeholder="Code postal"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="city">Ville *</Label>
-                      <Input
-                        id="city"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        disabled={!isEditingInfo}
-                        placeholder="Ville"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Pays */}
-                  <div>
-                    <Label htmlFor="country">Pays *</Label>
-                    <Select 
-                      value={selectedCountry} 
-                      onValueChange={handleCountryChange}
-                      disabled={!isEditingInfo}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionnez un pays" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.values(SUPPORTED_COUNTRIES).map((country) => (
-                          <SelectItem key={country.code} value={country.code}>
-                            {country.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
+
+                <Separator />
+
+                {/* Formulaire pour "Pour moi-même" */}
+                {!isGift && (
+                  <div className="grid gap-4">
+                    {/* Email */}
+                    <div>
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        disabled={true}
+                        required
+                      />
+                    </div>
+
+                    {/* Prénom et Nom */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="firstName">Prénom *</Label>
+                        <Input
+                          id="firstName"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          disabled={!isEditingInfo}
+                          placeholder="Votre prénom"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastName">Nom *</Label>
+                        <Input
+                          id="lastName"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          disabled={!isEditingInfo}
+                          placeholder="Votre nom"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Téléphone */}
+                    <div>
+                      <Label htmlFor="phone">Téléphone *</Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        disabled={!isEditingInfo}
+                        placeholder="Votre numéro de téléphone"
+                        required
+                      />
+                    </div>
+
+                    {/* Adresse */}
+                    <div>
+                      <Label htmlFor="address">Adresse *</Label>
+                      <Input
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        disabled={!isEditingInfo}
+                        placeholder="Numéro et nom de rue"
+                        required
+                      />
+                    </div>
+
+                    {/* Code postal et Ville */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="postalCode">Code postal *</Label>
+                        <Input
+                          id="postalCode"
+                          name="postalCode"
+                          value={formData.postalCode}
+                          onChange={handleInputChange}
+                          disabled={!isEditingInfo}
+                          placeholder="Code postal"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="city">Ville *</Label>
+                        <Input
+                          id="city"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          disabled={!isEditingInfo}
+                          placeholder="Ville"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Pays */}
+                    <div>
+                      <Label htmlFor="country">Pays *</Label>
+                      <Select 
+                        value={selectedCountry} 
+                        onValueChange={handleCountryChange}
+                        disabled={!isEditingInfo}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez un pays" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.values(SUPPORTED_COUNTRIES).map((country) => (
+                            <SelectItem key={country.code} value={country.code}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Formulaire pour "Pour quelqu'un d'autre" */}
+                {isGift && (
+                  <div className="grid gap-4">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-700 font-medium">
+                        Informations du destinataire du cadeau
+                      </p>
+                    </div>
+
+                    {/* Prénom et Nom du destinataire */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="recipientFirstName">Prénom du destinataire *</Label>
+                        <Input
+                          id="recipientFirstName"
+                          name="firstName"
+                          value={recipientData.firstName}
+                          onChange={handleRecipientInputChange}
+                          placeholder="Prénom du destinataire"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="recipientLastName">Nom du destinataire *</Label>
+                        <Input
+                          id="recipientLastName"
+                          name="lastName"
+                          value={recipientData.lastName}
+                          onChange={handleRecipientInputChange}
+                          placeholder="Nom du destinataire"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Téléphone du destinataire */}
+                    <div>
+                      <Label htmlFor="recipientPhone">Téléphone du destinataire *</Label>
+                      <Input
+                        id="recipientPhone"
+                        name="phone"
+                        type="tel"
+                        value={recipientData.phone}
+                        onChange={handleRecipientInputChange}
+                        placeholder="Numéro de téléphone du destinataire"
+                        required
+                      />
+                    </div>
+
+                    {/* Adresse du destinataire */}
+                    <div>
+                      <Label htmlFor="recipientAddress">Adresse du destinataire *</Label>
+                      <Input
+                        id="recipientAddress"
+                        name="address"
+                        value={recipientData.address}
+                        onChange={handleRecipientInputChange}
+                        placeholder="Numéro et nom de rue"
+                        required
+                      />
+                    </div>
+
+                    {/* Code postal et Ville du destinataire */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="recipientPostalCode">Code postal *</Label>
+                        <Input
+                          id="recipientPostalCode"
+                          name="postalCode"
+                          value={recipientData.postalCode}
+                          onChange={handleRecipientInputChange}
+                          placeholder="Code postal"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="recipientCity">Ville *</Label>
+                        <Input
+                          id="recipientCity"
+                          name="city"
+                          value={recipientData.city}
+                          onChange={handleRecipientInputChange}
+                          placeholder="Ville"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Pays du destinataire */}
+                    <div>
+                      <Label htmlFor="recipientCountry">Pays *</Label>
+                      <Select 
+                        value={recipientData.country} 
+                        onValueChange={(value) => {
+                          setRecipientData({
+                            ...recipientData,
+                            country: value
+                          });
+                          setSelectedCountry(value);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez un pays" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.values(SUPPORTED_COUNTRIES).map((country) => (
+                            <SelectItem key={country.code} value={country.code}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -588,18 +796,20 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                 {showPayment ? (
                   <StripePayment
                     orderData={{
+                      // Informations de facturation (toujours l'utilisateur connecté)
                       email: formData.email,
                       firstName: formData.firstName,
                       lastName: formData.lastName,
                       phone: formData.phone,
+                      // Informations de livraison (utilisateur ou destinataire)
                       ...(preferPointRelais && selectedRelayPoint && {
                         mondialRelayPoint: formData.mondialRelayPoint
                       }),
                       deliveryType: (preferPointRelais && availableServices.pointRelais) ? 'point-relais' : 'domicile',
-                      deliveryAddress: formData.address,
-                      deliveryPostalCode: formData.postalCode,
-                      deliveryCity: formData.city,
-                      deliveryCountry: selectedCountry || 'FR',
+                      deliveryAddress: isGift ? recipientData.address : formData.address,
+                      deliveryPostalCode: isGift ? recipientData.postalCode : formData.postalCode,
+                      deliveryCity: isGift ? recipientData.city : formData.city,
+                      deliveryCountry: isGift ? recipientData.country : selectedCountry || 'FR',
                       items: items.map(item => ({
                         productId: item.product.id,
                         productName: item.product.name,
@@ -608,7 +818,11 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                       })),
                       subtotal,
                       shippingCost,
-                      total
+                      total,
+                      // Informations cadeau
+                      isGift,
+                      recipientFirstName: isGift ? recipientData.firstName : undefined,
+                      recipientLastName: isGift ? recipientData.lastName : undefined
                     }}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}

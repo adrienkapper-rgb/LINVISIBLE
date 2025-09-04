@@ -36,6 +36,10 @@ interface OrderData {
   status: string
   stripe_payment_intent_id?: string
   created_at: string
+  // Champs pour les cadeaux
+  is_gift?: boolean
+  recipient_first_name?: string
+  recipient_last_name?: string
 }
 
 interface OrderItem {

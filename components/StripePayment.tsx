@@ -98,10 +98,19 @@ interface StripePaymentProps {
     lastName: string;
     phone: string;
     mondialRelayPoint: string;
+    deliveryType: 'point-relais' | 'domicile';
+    deliveryAddress?: string;
+    deliveryPostalCode?: string;
+    deliveryCity?: string;
+    deliveryCountry: string;
     items: any[];
     subtotal: number;
     shippingCost: number;
     total: number;
+    // Champs pour les cadeaux
+    isGift?: boolean;
+    recipientFirstName?: string;
+    recipientLastName?: string;
   };
   onSuccess: (orderNumber: string) => void;
   onError: (error: string) => void;
