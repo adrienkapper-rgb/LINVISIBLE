@@ -8,10 +8,7 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-serif mb-3">L'invisible</h3>
             <p className="text-sm text-muted-foreground">
-              Éditeur de cocktail artisanal
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Niché au cœur de Bordeaux
+              Éditeur de cocktails prêts à boire
             </p>
           </div>
           
