@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Pages importantes pour le SEO
+Allow: /boutique
+Allow: /produit/
+Allow: /contact
+Allow: /cgv
+Allow: /mentions-legales
+Allow: /confidentialite
+
+# Bloquer les pages admin et internes
+Disallow: /admin
+Disallow: /api/
+Disallow: /panier
+Disallow: /checkout
+Disallow: /mes-commandes
+Disallow: /mes-infos
+Disallow: /confirmation
+Disallow: /connexion
+
+# Sitemap
+Sitemap: https://www.cocktails-linvisible.fr/sitemap.xml

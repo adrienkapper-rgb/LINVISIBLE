@@ -23,7 +23,7 @@ export default async function Home() {
         <div className="relative w-full h-[40vh] mb-8">
           <Image
             src="https://rnxhkjvcixumuvjfxdjo.supabase.co/storage/v1/object/public/product-images/hero-image.png"
-            alt="L'invisible - Cocktails artisanaux"
+            alt="L'invisible - Atelier artisanal de cocktails prêts à boire à Bordeaux - Mixologie professionnelle"
             fill
             className="object-cover"
             priority
@@ -37,7 +37,7 @@ export default async function Home() {
           <div className="text-center">
             <h1 className="text-5xl md:text-7xl font-serif mb-4">L'invisible</h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-              Atelier artisanal et éditeur de cocktails prêts à boire
+              Atelier artisanal de cocktails à Bordeaux - Livraison Gironde
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/boutique">
@@ -56,12 +56,13 @@ export default async function Home() {
           <div className="grid md:grid-cols-2 gap-12">
             <div>
               <h2 className="text-3xl md:text-4xl font-serif mb-6">
-                Artisan du Cocktail
+                Artisan du Cocktail à Bordeaux
               </h2>
               <p className="text-lg text-muted-foreground mb-4">
-                La maison « L'invisible », nichée au cœur de Bordeaux, est un atelier 
-                artisanal dédié à l'art des cocktails. Nous avons à cœur d'accompagner 
-                les professionnels dans la réalisation de boissons qui transcendent l'ordinaire.
+                <strong>L'invisible</strong>, atelier artisanal basé au <strong>cœur de Bordeaux</strong>, 
+                se spécialise dans la création de <strong>cocktails prêts à boire</strong> pour professionnels 
+                et particuliers. Nous livrons dans toute la <strong>Gironde</strong> et la région 
+                <strong>Nouvelle-Aquitaine</strong>.
               </p>
               <p className="text-lg text-muted-foreground mb-4">
                 Notre carte de cocktails classiques, préparés avec un soin méticuleux et 
@@ -69,10 +70,10 @@ export default async function Home() {
                 tout en vous faisant gagner un temps précieux.
               </p>
               <p className="text-lg text-muted-foreground mb-8">
-                Mais la véritable valeur ajoutée de « L'invisible » réside dans notre 
-                capacité à créer des solutions sur mesure. Flexibles et à l'écoute, nous 
-                façonnons des cocktails à la demande, adaptés à votre clientèle et à vos 
-                désirs.
+                Notre expertise bordelaise s'étend aux <strong>cocktails sur mesure</strong> pour 
+                restaurants, bars et événements privés. Que vous soyez à <strong>Bordeaux, Mérignac, 
+                Pessac</strong> ou dans toute la <strong>métropole bordelaise</strong>, nous créons 
+                des solutions adaptées à votre clientèle.
               </p>
               <Link href="/boutique">
                 <Button size="lg" className="gap-2">
@@ -122,7 +123,7 @@ export default async function Home() {
                   <div className="aspect-square relative bg-gradient-to-b from-muted/20 to-muted/40 cursor-pointer">
                     <Image
                       src={getProductImageUrl(product.image_url)}
-                      alt={product.name}
+                      alt={`${product.name} - Cocktail artisanal L'invisible - ${product.price}€`}
                       fill
                       className="object-contain p-8"
                       loading="lazy"

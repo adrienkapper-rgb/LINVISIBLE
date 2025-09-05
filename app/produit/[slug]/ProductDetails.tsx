@@ -54,6 +54,58 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
   const addItem = useCart((state) => state.addItem);
   const { toast } = useToast();
 
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "description": product.description,
+    "image": product.image,
+    "brand": {
+      "@type": "Brand",
+      "name": "L'invisible"
+    },
+    "manufacturer": {
+      "@type": "Organization",
+      "name": "L'invisible",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Bordeaux",
+        "addressCountry": "FR"
+      }
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": product.price,
+      "priceCurrency": "EUR",
+      "availability": product.available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "url": `https://www.cocktails-linvisible.fr/produit/${product.slug}`,
+      "seller": {
+        "@type": "Organization",
+        "name": "L'invisible"
+      }
+    },
+    "category": "Cocktails",
+    "additionalProperty": [
+      {
+        "@type": "PropertyValue",
+        "name": "Volume",
+        "value": product.volume
+      },
+      {
+        "@type": "PropertyValue", 
+        "name": "Teneur en alcool",
+        "value": `${product.alcohol}% vol.`
+      },
+      {
+        "@type": "PropertyValue",
+        "name": "Poids",
+        "value": `${product.weight}g`
+      }
+    ],
+    "ingredient": product.ingredients,
+    "url": `https://www.cocktails-linvisible.fr/produit/${product.slug}`
+  };
+
   const handleQuantityChange = (value: string) => {
     if (value === "custom") {
       setShowCustomInput(true);
@@ -94,20 +146,27 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
   };
 
   return (
-    <div className="container px-4 py-8">
-      <Link href="/boutique">
-        <Button variant="ghost" className="mb-6 gap-2">
-          <ChevronLeft className="h-4 w-4" />
-          Retour à la boutique
-        </Button>
-      </Link>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productSchema),
+        }}
+      />
+      <div className="container px-4 py-8">
+        <Link href="/boutique">
+          <Button variant="ghost" className="mb-6 gap-2">
+            <ChevronLeft className="h-4 w-4" />
+            Retour à la boutique
+          </Button>
+        </Link>
 
       <div className="grid lg:grid-cols-2 gap-12">
         {/* Image */}
         <div className="relative aspect-square bg-gradient-to-b from-muted/20 to-muted/40 rounded-lg overflow-hidden">
           <Image
             src={product.image}
-            alt={product.name}
+            alt={`${product.name} - Cocktail artisanal ${product.volume} ${product.alcohol}% vol. - L'invisible Bordeaux`}
             fill
             className="object-contain p-12"
             priority
@@ -230,6 +289,7 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
           ))}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
