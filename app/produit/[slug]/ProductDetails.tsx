@@ -166,7 +166,7 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
         <div className="relative aspect-square bg-gradient-to-b from-muted/20 to-muted/40 rounded-lg overflow-hidden">
           <Image
             src={product.image}
-            alt={`${product.name} - Cocktail artisanal ${product.volume} ${product.alcohol}% vol. - L'invisible Bordeaux`}
+            alt={product.name}
             fill
             className="object-contain p-12"
             priority

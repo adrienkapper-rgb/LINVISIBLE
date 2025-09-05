@@ -21,15 +21,14 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: "L'invisible - Cocktails Artisanaux Bordeaux | Atelier & Éditeur",
-    template: "%s | L'invisible - Cocktails Bordeaux"
+    default: "L'invisible - Atelier artisanal et éditeur de cocktails",
+    template: "%s | L'invisible"
   },
-  description: "Atelier artisanal de cocktails prêts à boire à Bordeaux. Cocktails classiques et signatures créés par des mixologues. Livraison professionnels et particuliers.",
+  description: "Atelier artisanal dédié à l'art des cocktails. Cocktails classiques et signatures créés avec soin pour professionnels et particuliers.",
   keywords: [
-    'cocktails bordeaux',
     'cocktails artisanaux',
     'cocktails prêts à boire',
-    'mixologie bordeaux',
+    'mixologie',
     'atelier cocktails',
     'cocktails professionnels',
     'éditeur cocktails',
@@ -47,20 +46,20 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'fr_FR',
     url: 'https://www.cocktails-linvisible.fr',
-    title: "L'invisible - Cocktails Artisanaux Bordeaux",
-    description: "Atelier artisanal de cocktails prêts à boire à Bordeaux. Cocktails classiques et signatures créés par des mixologues.",
+    title: "L'invisible - Atelier artisanal et éditeur de cocktails",
+    description: "Atelier artisanal dédié à l'art des cocktails. Cocktails classiques et signatures créés avec soin.",
     siteName: "L'invisible",
     images: [{
       url: 'https://rnxhkjvcixumuvjfxdjo.supabase.co/storage/v1/object/public/product-images/hero-image.png',
       width: 1200,
       height: 630,
-      alt: "L'invisible - Cocktails artisanaux Bordeaux",
+      alt: "L'invisible - Cocktails artisanaux",
     }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "L'invisible - Cocktails Artisanaux Bordeaux",
-    description: "Atelier artisanal de cocktails prêts à boire à Bordeaux. Cocktails classiques et signatures créés par des mixologues.",
+    title: "L'invisible - Atelier artisanal et éditeur de cocktails",
+    description: "Atelier artisanal dédié à l'art des cocktails. Cocktails classiques et signatures créés avec soin.",
     images: ['https://rnxhkjvcixumuvjfxdjo.supabase.co/storage/v1/object/public/product-images/hero-image.png'],
   },
   robots: {
