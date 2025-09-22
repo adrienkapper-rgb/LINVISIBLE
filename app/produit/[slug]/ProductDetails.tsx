@@ -13,38 +13,12 @@ import { useCart } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingCart, ChevronLeft, Wine, Droplets, FlaskConical } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
+import { formatProductName } from "@/lib/utils/product";
+import { ProductDetailsData, ProductCardData } from "@/lib/types/product";
 
 interface ProductDetailsProps {
-  product: {
-    id: string;
-    slug: string;
-    name: string;
-    price: number;
-    volume: string;
-    alcohol: number;
-    image: string;
-    description: string | null;
-    ingredients: string[];
-    serving_instructions: string | null;
-    serving_size: string | null;
-    available: boolean;
-    weight: number;
-  };
-  otherProducts: Array<{
-    id: string;
-    slug: string;
-    name: string;
-    price: number;
-    volume: string;
-    alcohol: number;
-    image: string;
-    description: string | null;
-    ingredients: string[];
-    serving_instructions: string | null;
-    serving_size: string | null;
-    available: boolean;
-    weight: number;
-  }>;
+  product: ProductDetailsData;
+  otherProducts: ProductCardData[];
 }
 
 export default function ProductDetails({ product, otherProducts }: ProductDetailsProps) {
@@ -57,7 +31,7 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": product.name,
+    "name": formatProductName(product.numero, product.name),
     "description": product.description,
     "image": product.image,
     "brand": {
@@ -176,7 +150,7 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
         {/* Product Info */}
         <div>
           <div className="mb-6">
-            <h1 className="text-4xl font-serif mb-2">{product.name}</h1>
+            <h1 className="text-4xl font-serif mb-2">{formatProductName(product.numero, product.name)}</h1>
             <p className="text-xl text-muted-foreground">{product.description}</p>
           </div>
 

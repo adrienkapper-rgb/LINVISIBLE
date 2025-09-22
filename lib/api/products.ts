@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/types'
+import { mapProductRowToDisplay } from '@/lib/utils/product'
 import { cache } from 'react'
 
 export type Product = Database['public']['Tables']['products']['Row']
@@ -10,9 +11,9 @@ export const getProducts = cache(async (): Promise<Product[]> => {
   
   const { data, error } = await supabase
     .from('products')
-    .select('id, slug, name, price, volume, alcohol, image_url, description, ingredients, serving_instructions, serving_size, available, weight, created_at')
+    .select('id, slug, name, price, volume, alcohol, image_url, description, ingredients, serving_instructions, serving_size, available, weight, numero, stock_quantity, created_at, updated_at')
     .eq('available', true)
-    .order('name')
+    .order('numero')
   
   if (error) {
     console.error('Error fetching products:', error)
@@ -28,7 +29,7 @@ export const getProductBySlug = cache(async (slug: string): Promise<Product | nu
   
   const { data, error } = await supabase
     .from('products')
-    .select('id, slug, name, price, volume, alcohol, image_url, description, ingredients, serving_instructions, serving_size, available, weight, created_at')
+    .select('id, slug, name, price, volume, alcohol, image_url, description, ingredients, serving_instructions, serving_size, available, weight, numero, stock_quantity, created_at, updated_at')
     .eq('slug', slug)
     .single()
   
@@ -62,14 +63,5 @@ export async function trackProductEvent(
   }
 }
 
-export function getProductImageUrl(imageName: string | null): string {
-  if (!imageName) return '/products/placeholder.jpg'
-  
-  // If it's already a full URL (Supabase storage), return as-is
-  if (imageName.startsWith('https://')) {
-    return imageName
-  }
-  
-  // Otherwise, use local images
-  return `/products/${imageName}`
-}
+// Re-export utility function for backward compatibility
+export { getProductImageUrl } from '@/lib/utils/product'

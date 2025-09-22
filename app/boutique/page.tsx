@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { getProducts, getProductImageUrl } from "@/lib/api/products";
+import { mapProductRowToCardData } from "@/lib/utils/product";
 import { ProductGridSkeleton } from "@/components/skeletons/ProductGridSkeleton";
 
 async function ProductGrid() {
@@ -17,12 +18,9 @@ async function ProductGrid() {
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
       {products.map((product) => (
-        <ProductCard 
-          key={product.id} 
-          product={{
-            ...product,
-            image: getProductImageUrl(product.image_url)
-          }} 
+        <ProductCard
+          key={product.id}
+          product={mapProductRowToCardData(product)}
         />
       ))}
     </div>

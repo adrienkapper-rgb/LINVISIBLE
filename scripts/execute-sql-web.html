@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exécuter la requête SQL - Ajouter colonne numero</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .sql-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            overflow-x: auto;
+        }
+        .button {
+            background: #0066cc;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #0052a3;
+        }
+        .info {
+            background: #e1f5fe;
+            border-left: 4px solid #0288d1;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .step {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Ajouter la colonne "numero" à la table products</h1>
+
+    <div class="info">
+        <strong>📋 Projet Supabase:</strong> rnxhkjvcixumuvjfxdjo<br>
+        <strong>🔗 URL:</strong> https://rnxhkjvcixumuvjfxdjo.supabase.co<br>
+        <strong>📊 Table:</strong> products
+    </div>
+
+    <div class="step">
+        <h3>Étape 1: Accéder à l'interface Supabase</h3>
+        <p>Cliquez sur le bouton ci-dessous pour ouvrir directement l'éditeur SQL de votre projet Supabase :</p>
+        <a href="https://app.supabase.com/project/rnxhkjvcixumuvjfxdjo/sql/new" class="button" target="_blank">
+            🚀 Ouvrir l'éditeur SQL Supabase
+        </a>
+    </div>
+
+    <div class="step">
+        <h3>Étape 2: Copiez la requête SQL</h3>
+        <p>Copiez cette requête SQL dans l'éditeur :</p>
+        <div class="sql-box" id="sqlQuery">
+-- Ajouter la colonne "numero" à la table products
+-- Cette colonne sera de type INTEGER, NOT NULL avec une valeur par défaut de 0
+
+ALTER TABLE products
+ADD COLUMN numero INTEGER NOT NULL DEFAULT 0;
+
+-- Commentaire pour expliquer la colonne
+COMMENT ON COLUMN products.numero IS 'Numéro de référence du produit';</div>
+        <button class="button" onclick="copySql()">📋 Copier la requête SQL</button>
+    </div>
+
+    <div class="step">
+        <h3>Étape 3: Exécuter la requête</h3>
+        <p>Dans l'éditeur SQL Supabase :</p>
+        <ol>
+            <li>Collez la requête SQL copiée</li>
+            <li>Cliquez sur le bouton <strong>"Run"</strong> ou utilisez <code>Ctrl+Enter</code></li>
+            <li>Vérifiez que la requête s'exécute sans erreur</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Étape 4: Vérification (Optionnel)</h3>
+        <p>Pour vérifier que la colonne a été ajoutée, vous pouvez exécuter cette requête :</p>
+        <div class="sql-box" id="verifyQuery">
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_name = 'products'
+AND column_name = 'numero';</div>
+        <button class="button" onclick="copyVerify()">📋 Copier la requête de vérification</button>
+    </div>
+
+    <div class="success">
+        <strong>✅ Après l'exécution réussie :</strong><br>
+        La table <code>products</code> aura une nouvelle colonne <code>numero</code> de type <code>INTEGER</code>,
+        <code>NOT NULL</code> avec une valeur par défaut de <code>0</code>.
+    </div>
+
+    <div class="step">
+        <h3>Étape 5: Mise à jour des types TypeScript</h3>
+        <p>Après avoir ajouté la colonne, vous devrez mettre à jour le fichier <code>types/supabase.ts</code>
+        pour inclure la nouvelle colonne dans l'interface TypeScript de la table products :</p>
+        <div class="sql-box">
+// Dans la section Row de products:
+numero: number
+
+// Dans la section Insert de products:
+numero?: number
+
+// Dans la section Update de products:
+numero?: number</div>
+    </div>
+
+    <script>
+        function copySql() {
+            const sqlText = document.getElementById('sqlQuery').textContent;
+            navigator.clipboard.writeText(sqlText).then(() => {
+                alert('✅ Requête SQL copiée dans le presse-papiers !');
+            }).catch(() => {
+                alert('❌ Erreur lors de la copie. Veuillez copier manuellement.');
+            });
+        }
+
+        function copyVerify() {
+            const verifyText = document.getElementById('verifyQuery').textContent;
+            navigator.clipboard.writeText(verifyText).then(() => {
+                alert('✅ Requête de vérification copiée dans le presse-papiers !');
+            }).catch(() => {
+                alert('❌ Erreur lors de la copie. Veuillez copier manuellement.');
+            });
+        }
+    </script>
+</body>
+</html>

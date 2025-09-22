@@ -256,6 +256,7 @@ export type Database = {
           image_url: string | null
           ingredients: string[] | null
           name: string
+          numero: number
           price: number
           serving_instructions: string | null
           serving_size: string | null
@@ -274,6 +275,7 @@ export type Database = {
           image_url?: string | null
           ingredients?: string[] | null
           name: string
+          numero?: number
           price: number
           serving_instructions?: string | null
           serving_size?: string | null

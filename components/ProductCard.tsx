@@ -15,23 +15,11 @@ import {
 import { useCart } from "@/lib/store";
 import { ShoppingCart, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatProductName } from "@/lib/utils/product";
+import { ProductCardData } from "@/lib/types/product";
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    slug: string;
-    name: string;
-    price: number;
-    volume: string;
-    alcohol: number;
-    image: string;
-    description: string | null;
-    ingredients: string[];
-    serving_instructions: string | null;
-    serving_size: string | null;
-    available: boolean;
-    weight: number;
-  };
+  product: ProductCardData;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -64,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </Link>
       
       <CardContent className="p-6">
-        <h3 className="text-xl font-serif mb-2">{product.name}</h3>
+        <h3 className="text-xl font-serif mb-2">{formatProductName(product.numero, product.name)}</h3>
         <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
           {product.description || ""}
         </p>

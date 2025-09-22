@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { getProductBySlug, getProducts, getProductImageUrl } from "@/lib/api/products";
+import { getProductTitle, getProductDescription, getProductImageAlt, mapProductRowToCardData } from "@/lib/utils/product";
 import ProductDetails from "./ProductDetails";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -14,8 +15,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const productImage = getProductImageUrl(product.image_url);
-  const title = `${product.name} - Cocktail Artisanal`;
-  const description = `Découvrez ${product.name}, cocktail artisanal de L'invisible à Bordeaux. ${product.description} Prix: ${product.price}€. Commandez en ligne.`;
+  const title = getProductTitle(product.numero, product.name);
+  const description = getProductDescription(product.numero, product.name, product.description, product.price);
 
   return {
     title,
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         url: productImage,
         width: 800,
         height: 800,
-        alt: `${product.name} - Cocktail artisanal L'invisible`,
+        alt: getProductImageAlt(product.numero, product.name),
       }],
       siteName: "L'invisible",
     },
@@ -65,10 +66,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const otherProducts = allProducts
     .filter(p => p.id !== product.id)
     .slice(0, 3)
-    .map(p => ({
-      ...p,
-      image: getProductImageUrl(p.image_url)
-    }));
+    .map(mapProductRowToCardData);
 
   return (
     <ProductDetails 
