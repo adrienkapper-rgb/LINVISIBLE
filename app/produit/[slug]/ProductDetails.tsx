@@ -176,7 +176,7 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
               Composition
             </h3>
             <ul className="space-y-2">
-              {product.ingredients.map((ingredient, index) => (
+              {product.ingredients.slice().reverse().map((ingredient, index) => (
                 <li key={index} className="flex items-center gap-2 text-muted-foreground">
                   <span className="w-2 h-2 bg-primary rounded-full" />
                   {ingredient}

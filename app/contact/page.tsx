@@ -98,7 +98,7 @@ export default function ContactPage() {
                     <FormItem>
                       <FormLabel>Nom complet *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jean Dupont" {...field} />
+                        <Input placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -112,7 +112,7 @@ export default function ContactPage() {
                     <FormItem>
                       <FormLabel>Email *</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="jean.dupont@email.com" {...field} />
+                        <Input type="email" placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -128,7 +128,7 @@ export default function ContactPage() {
                     <FormItem>
                       <FormLabel>Téléphone (optionnel)</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="06 12 34 56 78" {...field} />
+                        <Input type="tel" placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -142,7 +142,7 @@ export default function ContactPage() {
                     <FormItem>
                       <FormLabel>Objet *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Demande de renseignements" {...field} />
+                        <Input placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -158,7 +158,7 @@ export default function ContactPage() {
                     <FormLabel>Message *</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Décrivez votre projet ou votre demande..."
+                        placeholder=""
                         className="min-h-[150px]"
                         {...field} 
                       />
