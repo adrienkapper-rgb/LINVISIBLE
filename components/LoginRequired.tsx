@@ -74,7 +74,7 @@ export function LoginRequired() {
         </div>
 
         <div className="pt-8">
-          <Link href="/boutique">
+          <Link href="/">
             <Button variant="ghost">
               ← Continuer mes achats
             </Button>

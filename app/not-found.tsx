@@ -52,7 +52,7 @@ export default function NotFound() {
               <p className="text-muted-foreground mb-4">
                 Cocktails classiques et signatures prêts à boire
               </p>
-              <Link href="/boutique">
+              <Link href="/">
                 <Button className="w-full">
                   Voir nos cocktails
                 </Button>
@@ -86,10 +86,10 @@ export default function NotFound() {
               <strong>Vous cherchiez peut-être :</strong>
             </p>
             <ul className="space-y-2 ml-4">
-              <li>• <Link href="/boutique" className="hover:text-primary underline">Cocktails artisanaux Bordeaux</Link></li>
+              <li>• <Link href="/" className="hover:text-primary underline">Cocktails artisanaux Bordeaux</Link></li>
               <li>• <Link href="/contact" className="hover:text-primary underline">Cocktails pour restaurants Gironde</Link></li>
               <li>• <Link href="/contact" className="hover:text-primary underline">Événements privés Bordeaux métropole</Link></li>
-              <li>• <Link href="/boutique" className="hover:text-primary underline">Cocktails signatures Nouvelle-Aquitaine</Link></li>
+              <li>• <Link href="/" className="hover:text-primary underline">Cocktails signatures Nouvelle-Aquitaine</Link></li>
             </ul>
           </div>
         </div>

@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Pages importantes pour le SEO
-Allow: /boutique
+Allow: /a-propos
 Allow: /produit/
 Allow: /contact
 Allow: /cgv

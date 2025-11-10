@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
   Table,
   TableBody,
@@ -82,13 +83,40 @@ export default function ProductsPage() {
       })
 
       if (!response.ok) throw new Error('Failed to delete product')
-      
+
       setProducts(prev => prev.filter(p => p.id !== productId))
       toast.success('Produit supprimé avec succès')
     } catch (error) {
       toast.error('Erreur lors de la suppression du produit')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const toggleAvailability = async (productId: string, currentStatus: boolean) => {
+    // Optimistic update
+    setProducts(prev => prev.map(p =>
+      p.id === productId ? { ...p, available: !currentStatus } : p
+    ))
+
+    try {
+      const response = await fetch(`/api/admin/products/${productId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ available: !currentStatus })
+      })
+
+      if (!response.ok) throw new Error('Failed to update product')
+
+      toast.success(`Produit ${!currentStatus ? 'activé' : 'désactivé'} avec succès`)
+    } catch (error) {
+      // Revert optimistic update on error
+      setProducts(prev => prev.map(p =>
+        p.id === productId ? { ...p, available: currentStatus } : p
+      ))
+      toast.error('Erreur lors de la mise à jour du produit')
     }
   }
 
@@ -212,9 +240,15 @@ export default function ProductsPage() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={product.available ? 'default' : 'secondary'}>
-                      {product.available ? 'Disponible' : 'Indisponible'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={product.available}
+                        onCheckedChange={() => toggleAvailability(product.id, product.available)}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {product.available ? 'Visible' : 'Masqué'}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { getProductBySlug, getProducts, getProductImageUrl } from "@/lib/api/products";
-import { getProductTitle, getProductDescription, getProductImageAlt, mapProductRowToCardData } from "@/lib/utils/product";
+import { getProductBySlug, getProductImageUrl } from "@/lib/api/products";
+import { getProductTitle, getProductDescription, getProductImageAlt } from "@/lib/utils/product";
 import ProductDetails from "./ProductDetails";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -62,19 +62,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     notFound();
   }
 
-  const allProducts = await getProducts();
-  const otherProducts = allProducts
-    .filter(p => p.id !== product.id)
-    .slice(0, 3)
-    .map(mapProductRowToCardData);
-
   return (
-    <ProductDetails 
+    <ProductDetails
       product={{
         ...product,
         image: getProductImageUrl(product.image_url)
-      }} 
-      otherProducts={otherProducts} 
+      }}
     />
   );
 }

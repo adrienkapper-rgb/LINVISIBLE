@@ -13,9 +13,11 @@ import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useForm } from 'react-hook-form'
 import Image from 'next/image'
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog'
 
 interface Product {
   id: string
+  numero: number
   slug: string
   name: string
   price: number
@@ -34,6 +36,7 @@ interface Product {
 }
 
 interface ProductForm {
+  numero: number
   slug: string
   name: string
   price: number
@@ -57,7 +60,7 @@ export default function EditProductPage() {
   const [saving, setSaving] = useState(false)
   const [ingredients, setIngredients] = useState<string[]>([''])
   
-  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<ProductForm>()
+  const { register, handleSubmit, setValue, reset, watch, formState: { errors } } = useForm<ProductForm>()
 
   useEffect(() => {
     if (params.id) {
@@ -71,6 +74,7 @@ export default function EditProductPage() {
       setIngredients(productIngredients.length > 0 ? productIngredients : [''])
       
       reset({
+        numero: product.numero,
         slug: product.slug,
         name: product.name,
         price: product.price,
@@ -214,6 +218,22 @@ export default function EditProductPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="numero">Numéro du produit</Label>
+                <Input
+                  id="numero"
+                  type="number"
+                  {...register('numero', {
+                    required: 'Le numéro est requis',
+                    valueAsNumber: true,
+                    min: { value: 1, message: 'Le numéro doit être positif' }
+                  })}
+                />
+                {errors.numero && (
+                  <p className="text-sm text-red-600">{errors.numero.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="name">Nom du produit</Label>
                 <Input
                   id="name"
@@ -242,8 +262,9 @@ export default function EditProductPage() {
                     id="price"
                     type="number"
                     step="0.01"
-                    {...register('price', { 
+                    {...register('price', {
                       required: 'Le prix est requis',
+                      valueAsNumber: true,
                       min: { value: 0, message: 'Le prix doit être positif' }
                     })}
                   />
@@ -270,8 +291,9 @@ export default function EditProductPage() {
                   id="alcohol"
                   type="number"
                   step="0.1"
-                  {...register('alcohol', { 
+                  {...register('alcohol', {
                     required: 'Le degré d\'alcool est requis',
+                    valueAsNumber: true,
                     min: { value: 0, message: 'Le degré doit être positif' },
                     max: { value: 100, message: 'Le degré ne peut pas dépasser 100%' }
                   })}
@@ -282,12 +304,21 @@ export default function EditProductPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="image_url">URL de l'image</Label>
-                <Input
-                  id="image_url"
-                  type="url"
-                  {...register('image_url')}
+                <Label htmlFor="image_url">Image du produit</Label>
+                <ImagePickerDialog
+                  value={watch('image_url')}
+                  onChange={(url) => setValue('image_url', url)}
                 />
+                {watch('image_url') && (
+                  <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border">
+                    <Image
+                      src={watch('image_url')}
+                      alt="Aperçu"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -356,8 +387,9 @@ export default function EditProductPage() {
                   <Input
                     id="weight"
                     type="number"
-                    {...register('weight', { 
+                    {...register('weight', {
                       required: 'Le poids est requis',
+                      valueAsNumber: true,
                       min: { value: 1, message: 'Le poids doit être positif' }
                     })}
                   />
@@ -381,8 +413,9 @@ export default function EditProductPage() {
                 <Input
                   id="stock_quantity"
                   type="number"
-                  {...register('stock_quantity', { 
+                  {...register('stock_quantity', {
                     required: 'Le stock est requis',
+                    valueAsNumber: true,
                     min: { value: 0, message: 'Le stock ne peut pas être négatif' }
                   })}
                 />

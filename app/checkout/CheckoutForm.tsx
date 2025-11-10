@@ -320,7 +320,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
     return (
       <div className="container px-4 py-16 text-center">
         <p>Votre panier est vide.</p>
-        <Link href="/boutique">
+        <Link href="/">
           <Button className="mt-4">Retour à la boutique</Button>
         </Link>
       </div>

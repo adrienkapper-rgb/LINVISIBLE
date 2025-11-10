@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const body = await request.json()
 
+  console.log('Creating product with body:', JSON.stringify(body, null, 2))
+
   const { data, error } = await supabase
     .from('products')
     .insert([body])
@@ -33,6 +35,8 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) {
+    console.error('Supabase insert error:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

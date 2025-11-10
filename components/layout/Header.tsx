@@ -51,8 +51,8 @@ export function Header() {
           <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
             Accueil
           </Link>
-          <Link href="/boutique" className="text-sm font-medium transition-colors hover:text-primary">
-            Boutique
+          <Link href="/a-propos" className="text-sm font-medium transition-colors hover:text-primary">
+            À propos
           </Link>
           <Link href="/contact" className="text-sm font-medium transition-colors hover:text-primary">
             Contact
@@ -81,11 +81,11 @@ export function Header() {
                     Accueil
                   </Link>
                   <Link
-                    href="/boutique"
+                    href="/a-propos"
                     className="block px-2 py-1 text-sm transition-colors hover:text-primary rounded-md hover:bg-accent"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Boutique
+                    À propos
                   </Link>
                   <Link
                     href="/contact"

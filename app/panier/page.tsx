@@ -29,7 +29,7 @@ export default function CartPage() {
           <p className="text-muted-foreground mb-8">
             Découvrez notre sélection de cocktails artisanaux
           </p>
-          <Link href="/boutique">
+          <Link href="/">
             <Button size="lg" className="gap-2">
               Continuer mes achats <ArrowRight className="h-4 w-4" />
             </Button>
@@ -157,7 +157,7 @@ export default function CartPage() {
                     Commander
                   </Button>
                 </Link>
-                <Link href="/boutique" className="block">
+                <Link href="/" className="block">
                   <Button variant="outline" className="w-full">
                     Continuer mes achats
                   </Button>

@@ -11,8 +11,11 @@ import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Save, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
+import Image from 'next/image'
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog'
 
 interface ProductForm {
+  numero: number
   slug: string
   name: string
   price: number
@@ -35,6 +38,7 @@ export default function NewProductPage() {
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ProductForm>({
     defaultValues: {
+      numero: 7,
       available: true,
       stock_quantity: 0,
       weight: 750,
@@ -121,6 +125,22 @@ export default function NewProductPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="numero">Numéro du produit</Label>
+                <Input
+                  id="numero"
+                  type="number"
+                  {...register('numero', {
+                    required: 'Le numéro est requis',
+                    valueAsNumber: true,
+                    min: { value: 1, message: 'Le numéro doit être positif' }
+                  })}
+                />
+                {errors.numero && (
+                  <p className="text-sm text-red-600">{errors.numero.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="name">Nom du produit</Label>
                 <Input
                   id="name"
@@ -153,8 +173,9 @@ export default function NewProductPage() {
                     id="price"
                     type="number"
                     step="0.01"
-                    {...register('price', { 
+                    {...register('price', {
                       required: 'Le prix est requis',
+                      valueAsNumber: true,
                       min: { value: 0, message: 'Le prix doit être positif' }
                     })}
                   />
@@ -182,8 +203,9 @@ export default function NewProductPage() {
                   id="alcohol"
                   type="number"
                   step="0.1"
-                  {...register('alcohol', { 
+                  {...register('alcohol', {
                     required: 'Le degré d\'alcool est requis',
+                    valueAsNumber: true,
                     min: { value: 0, message: 'Le degré doit être positif' },
                     max: { value: 100, message: 'Le degré ne peut pas dépasser 100%' }
                   })}
@@ -194,13 +216,21 @@ export default function NewProductPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="image_url">URL de l'image</Label>
-                <Input
-                  id="image_url"
-                  type="url"
-                  placeholder="https://..."
-                  {...register('image_url')}
+                <Label htmlFor="image_url">Image du produit</Label>
+                <ImagePickerDialog
+                  value={watch('image_url')}
+                  onChange={(url) => setValue('image_url', url)}
                 />
+                {watch('image_url') && (
+                  <div className="mt-2 relative w-full h-48 rounded-lg overflow-hidden border">
+                    <Image
+                      src={watch('image_url')}
+                      alt="Aperçu"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -270,8 +300,9 @@ export default function NewProductPage() {
                   <Input
                     id="weight"
                     type="number"
-                    {...register('weight', { 
+                    {...register('weight', {
                       required: 'Le poids est requis',
+                      valueAsNumber: true,
                       min: { value: 1, message: 'Le poids doit être positif' }
                     })}
                   />
@@ -295,8 +326,9 @@ export default function NewProductPage() {
                 <Input
                   id="stock_quantity"
                   type="number"
-                  {...register('stock_quantity', { 
+                  {...register('stock_quantity', {
                     required: 'Le stock est requis',
+                    valueAsNumber: true,
                     min: { value: 0, message: 'Le stock ne peut pas être négatif' }
                   })}
                 />

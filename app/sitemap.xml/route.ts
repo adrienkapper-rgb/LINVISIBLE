@@ -7,7 +7,7 @@ export async function GET() {
   // Pages statiques
   const staticPages = [
     '',
-    '/boutique',
+    '/a-propos',
     '/contact',
     '/cgv',
     '/mentions-legales',

@@ -72,7 +72,7 @@ export default function MesCommandesPage() {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Actualiser
             </Button>
-            <Link href="/boutique">
+            <Link href="/">
               <Button size="sm">
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 Continuer mes achats

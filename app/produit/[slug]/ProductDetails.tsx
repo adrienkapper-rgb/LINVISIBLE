@@ -12,16 +12,14 @@ import { Input } from "@/components/ui/input";
 import { useCart } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingCart, ChevronLeft, Wine, Droplets, FlaskConical } from "lucide-react";
-import { ProductCard } from "@/components/ProductCard";
 import { formatProductName } from "@/lib/utils/product";
-import { ProductDetailsData, ProductCardData } from "@/lib/types/product";
+import { ProductDetailsData } from "@/lib/types/product";
 
 interface ProductDetailsProps {
   product: ProductDetailsData;
-  otherProducts: ProductCardData[];
 }
 
-export default function ProductDetails({ product, otherProducts }: ProductDetailsProps) {
+export default function ProductDetails({ product }: ProductDetailsProps) {
   const [quantity, setQuantity] = useState("1");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customQuantity, setCustomQuantity] = useState("");
@@ -128,10 +126,10 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
         }}
       />
       <div className="container px-4 py-8">
-        <Link href="/boutique">
+        <Link href="/">
           <Button variant="ghost" className="mb-6 gap-2">
             <ChevronLeft className="h-4 w-4" />
-            Retour à la boutique
+            Retour au catalogue
           </Button>
         </Link>
 
@@ -251,16 +249,6 @@ export default function ProductDetails({ product, otherProducts }: ProductDetail
             )}
           </div>
 
-        </div>
-      </div>
-
-      {/* Related Products */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-serif mb-8">Vous pourriez aussi aimer</h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {otherProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
         </div>
       </div>
       </div>

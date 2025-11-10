@@ -213,7 +213,7 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/boutique">
+          <Link href="/">
             <Button variant="outline" className="gap-2">
               Continuer mes achats
             </Button>

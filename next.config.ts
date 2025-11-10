@@ -22,6 +22,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
   },
+  async redirects() {
+    return [
+      {
+        source: '/boutique',
+        destination: '/',
+        permanent: true, // 301 redirect for SEO
+      },
+    ];
+  },
 };
 
 export default nextConfig;
