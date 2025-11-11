@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Metadata } from "next";
+import { getAboutPageContent } from "@/lib/api/interface";
 
 export const metadata: Metadata = {
   title: "À propos - Cocktails L'invisible",
@@ -17,16 +18,45 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AProposPage() {
+export default async function AProposPage() {
+  // Load page content from database (default to French)
+  const content = await getAboutPageContent('fr')
+
+  // Fallback content if database fails
+  const fallbackContent = {
+    hero: {
+      title: "À propos de L'invisible",
+      subtitle: "Découvrez notre histoire, notre savoir-faire et nos engagements"
+    },
+    artisan: {
+      title: "Artisan du cocktail",
+      paragraph_1: "La maison \"L'invisible\" est située au cœur de Bordeaux et à proximité de la région de Cognac. Elle vous offre une sélection de cocktails de haute qualité et prêts à déguster chez soi."
+    },
+    professionals: {
+      title: "Au service des professionnels",
+      paragraph_1: "Notre carte de cocktails classiques, préparés avec un soin méticuleux et des ingrédients de qualité, est pensée pour offrir une expérience unique tout en vous faisant gagner un temps précieux.",
+      paragraph_2: "Mais la véritable valeur ajoutée de « L'invisible » réside dans notre capacité à créer des solutions sur mesure. Flexibles et à l'écoute, nous façonnons des cocktails à la demande, adaptés à votre clientèle et à vos désirs."
+    },
+    editor: {
+      title: "Éditeur de Cocktails",
+      paragraph_1: "Notre savoir-faire s'étend également à la création et à la diffusion de cocktails signatures, conçus pour mettre en lumière des mixologues d'exception.",
+      paragraph_2: "Ce service exclusif s'adresse aux créateurs indépendants souhaitant partager leurs œuvres avec le monde, ainsi qu'aux organisateurs de concours désireux d'immortaliser des créations gagnantes."
+    }
+  }
+
+  const pageContent = content || fallbackContent
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-b from-background to-muted/40 py-16 md:py-24">
         <div className="container px-4">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-5xl font-serif mb-6">À propos de L'invisible</h1>
+            <h1 className="text-4xl md:text-5xl font-serif mb-6">
+              {pageContent.hero.title}
+            </h1>
             <p className="text-xl text-muted-foreground">
-              Découvrez notre histoire, notre savoir-faire et nos engagements
+              {pageContent.hero.subtitle}
             </p>
           </div>
         </div>
@@ -38,10 +68,10 @@ export default function AProposPage() {
           <div className="grid md:grid-cols-3 gap-8 items-center">
             <div className="md:col-span-2 text-left">
               <h2 className="text-3xl md:text-4xl font-serif mb-6">
-                Artisan du cocktail
+                {pageContent.artisan.title}
               </h2>
               <p className="text-lg text-muted-foreground text-justify">
-                La maison "L'invisible" est située au cœur de Bordeaux et à proximité de la région de Cognac. Elle vous offre une sélection de cocktails de haute qualité et prêts à déguster chez soi.
+                {pageContent.artisan.paragraph_1}
               </p>
             </div>
             <div className="md:col-span-1 flex justify-end">
@@ -56,13 +86,13 @@ export default function AProposPage() {
         <div className="container px-4">
           <div className="text-right max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-serif mb-6">
-              Au service des professionnels
+              {pageContent.professionals.title}
             </h2>
             <p className="text-lg text-muted-foreground mb-4 text-justify">
-              Notre carte de cocktails classiques, préparés avec un soin méticuleux et des ingrédients de qualité, est pensée pour offrir une expérience unique tout en vous faisant gagner un temps précieux.
+              {pageContent.professionals.paragraph_1}
             </p>
             <p className="text-lg text-muted-foreground text-justify">
-              Mais la véritable valeur ajoutée de « L'invisible » réside dans notre capacité à créer des solutions sur mesure. Flexibles et à l'écoute, nous façonnons des cocktails à la demande, adaptés à votre clientèle et à vos désirs.
+              {pageContent.professionals.paragraph_2}
             </p>
           </div>
         </div>
@@ -74,16 +104,13 @@ export default function AProposPage() {
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12 items-end">
             <div className="md:col-span-2 text-left">
               <h2 className="text-3xl md:text-4xl font-serif mb-6">
-                Éditeur de Cocktails
+                {pageContent.editor.title}
               </h2>
               <p className="text-lg text-muted-foreground mb-4 text-justify">
-                Notre savoir-faire s'étend également à la création et à la diffusion de
-                cocktails signatures, conçus pour mettre en lumière des mixologues d'exception.
+                {pageContent.editor.paragraph_1}
               </p>
               <p className="text-lg text-muted-foreground text-justify">
-                Ce service exclusif s'adresse aux créateurs indépendants souhaitant partager
-                leurs œuvres avec le monde, ainsi qu'aux organisateurs de concours désireux
-                d'immortaliser des créations gagnantes.
+                {pageContent.editor.paragraph_2}
               </p>
             </div>
             <div className="md:col-span-1 flex justify-end">

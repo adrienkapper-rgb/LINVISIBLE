@@ -2,16 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  Users, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
   MessageSquare,
   BarChart3,
   Settings,
   LogOut,
-  Home
+  Home,
+  Palette
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -49,6 +50,11 @@ const menuItems = [
     title: 'Statistiques',
     href: '/admin/stats',
     icon: BarChart3
+  },
+  {
+    title: 'Interface',
+    href: '/admin/interface',
+    icon: Palette
   }
 ]
 

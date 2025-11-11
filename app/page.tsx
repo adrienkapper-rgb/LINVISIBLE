@@ -2,9 +2,52 @@ import { Suspense } from "react";
 import Image from "next/image";
 import { ProductCard } from "@/components/ProductCard";
 import { getProducts, getProductImageUrl } from "@/lib/api/products";
+import { getHeroImageUrl } from "@/lib/api/interface";
 import { mapProductRowToCardData } from "@/lib/utils/product";
 import { ProductGridSkeleton } from "@/components/skeletons/ProductGridSkeleton";
 import { AgeVerificationWrapper } from "@/components/AgeVerificationWrapper";
+
+async function HeroSection() {
+  const heroImageUrl = await getHeroImageUrl();
+
+  return (
+    <section className="relative w-full h-[40vh]">
+      {/* Background Image */}
+      <Image
+        src={heroImageUrl}
+        alt="L'invisible - Cocktails artisanaux"
+        fill
+        className="object-cover"
+        priority
+        sizes="100vw"
+        quality={90}
+      />
+
+      {/* Dark Overlay for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
+
+      {/* Text Overlay - Centered */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="container px-4">
+          <div className="text-center">
+            <h1
+              className="text-6xl md:text-8xl font-serif mb-4 text-white drop-shadow-lg"
+              style={{ filter: 'blur(1.5px)' }}
+            >
+              Cocktails L'invisible
+            </h1>
+            <p
+              className="text-2xl md:text-3xl text-white/90 drop-shadow-md"
+              style={{ filter: 'blur(1.5px)' }}
+            >
+              Editeur de cocktails prêts à boire
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 async function ProductGrid() {
   const products = await getProducts();
@@ -36,41 +79,11 @@ export default function BoutiquePage() {
 
       <div className="flex flex-col">
         {/* Hero Section */}
-        <section className="relative w-full h-[40vh]">
-          {/* Background Image */}
-          <Image
-            src="https://rnxhkjvcixumuvjfxdjo.supabase.co/storage/v1/object/public/product-images/hero-image.png"
-            alt="L'invisible - Cocktails artisanaux"
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-            quality={90}
-          />
-
-          {/* Dark Overlay for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
-
-          {/* Text Overlay - Centered */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="container px-4">
-              <div className="text-center">
-                <h1
-                  className="text-5xl md:text-7xl font-serif mb-4 text-white drop-shadow-lg"
-                  style={{ filter: 'blur(1.5px)' }}
-                >
-                  Cocktails L'invisible
-                </h1>
-                <p
-                  className="text-xl md:text-2xl text-white/90 drop-shadow-md"
-                  style={{ filter: 'blur(1.5px)' }}
-                >
-                  Editeur de cocktails prêts à boire
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <Suspense fallback={
+          <section className="relative w-full h-[40vh] bg-gray-200 animate-pulse" />
+        }>
+          <HeroSection />
+        </Suspense>
 
         {/* Products Section */}
         <div className="container px-4 py-8 md:py-12">
