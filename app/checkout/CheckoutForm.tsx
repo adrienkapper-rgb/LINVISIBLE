@@ -93,9 +93,22 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
   
   // Obtenir les services disponibles pour le pays sélectionné
   const availableServices = getAvailableServices(effectiveCountry);
-  
+
   // Calcul dynamique du poids et du tarif
   const totalWeight = calculateTotalWeight(items);
+
+  // Vérifier si le poids dépasse la limite pour la livraison à domicile (25kg pour la France)
+  const DOMICILE_WEIGHT_LIMIT = 25000; // 25kg en grammes
+  const isOverDomicileLimit = totalWeight > DOMICILE_WEIGHT_LIMIT && effectiveCountry === 'FR';
+
+  // Si le poids dépasse la limite domicile et que domicile était sélectionné, forcer Point Relais
+  useEffect(() => {
+    if (isOverDomicileLimit && !preferPointRelais && availableServices.pointRelais) {
+      setPreferPointRelais(true);
+      setSelectedRelayPoint(null);
+    }
+  }, [isOverDomicileLimit, preferPointRelais, availableServices.pointRelais]);
+
   const shippingInfo = getShippingInfo(totalWeight, effectiveCountry, preferPointRelais && availableServices.pointRelais);
   const shippingCost = shippingInfo.cost;
   const subtotal = getTotalPrice();
@@ -689,11 +702,20 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                             setPreferPointRelais(false);
                             setSelectedRelayPoint(null);
                           }}
+                          disabled={isOverDomicileLimit}
                         />
-                        <Label htmlFor="home-delivery" className="text-sm">
-                          Livraison à domicile
+                        <Label htmlFor="home-delivery" className={`text-sm ${isOverDomicileLimit ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                          Livraison à domicile {isOverDomicileLimit && '(non disponible pour ce poids)'}
                         </Label>
                       </div>
+                      {isOverDomicileLimit && (
+                        <div className="p-3 bg-orange-50 rounded-lg flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-orange-700">
+                            La livraison à domicile est limitée à 25kg (environ 21 bouteilles). Votre commande de {(totalWeight / 1000).toFixed(1)}kg nécessite la livraison en Point Relais.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

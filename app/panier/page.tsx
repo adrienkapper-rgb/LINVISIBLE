@@ -126,7 +126,7 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    Livraison estimée (France)
+                    Livraison estimée ({shippingInfo.formattedWeight}, France)
                   </span>
                   <span className="text-muted-foreground">{shippingCost.toFixed(2)}€</span>
                 </div>

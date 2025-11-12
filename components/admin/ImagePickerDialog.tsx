@@ -339,12 +339,14 @@ export function ImagePickerDialog({ value, onChange }: ImagePickerDialogProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cette image ?</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>Cette action est irréversible. L'image sera définitivement supprimée du stockage.</p>
-              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                  ⚠️ Si cette image est utilisée par des produits, elle ne sera plus affichée.
-                </p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Cette action est irréversible. L'image sera définitivement supprimée du stockage.</p>
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    ⚠️ Si cette image est utilisée par des produits, elle ne sera plus affichée.
+                  </p>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>

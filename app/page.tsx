@@ -11,13 +11,13 @@ async function HeroSection() {
   const heroImageUrl = await getHeroImageUrl();
 
   return (
-    <section className="relative w-full h-[40vh]">
+    <section className="relative w-full h-[50vh]">
       {/* Background Image */}
       <Image
         src={heroImageUrl}
         alt="L'invisible - Cocktails artisanaux"
         fill
-        className="object-cover"
+        className="object-cover object-center"
         priority
         sizes="100vw"
         quality={90}
@@ -31,14 +31,12 @@ async function HeroSection() {
         <div className="container px-4">
           <div className="text-center">
             <h1
-              className="text-6xl md:text-8xl font-serif mb-4 text-white drop-shadow-lg"
-              style={{ filter: 'blur(1.5px)' }}
+              className="text-7xl md:text-9xl font-serif mb-4 text-white drop-shadow-lg"
             >
               Cocktails L'invisible
             </h1>
             <p
-              className="text-2xl md:text-3xl text-white/90 drop-shadow-md"
-              style={{ filter: 'blur(1.5px)' }}
+              className="text-3xl md:text-4xl text-white/90 drop-shadow-md"
             >
               Editeur de cocktails prêts à boire
             </p>

@@ -189,7 +189,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
               <h3 className="text-lg font-semibold mb-3">
                 Comment servir
               </h3>
-              <p className="text-muted-foreground">{product.serving_instructions}</p>
+              <p className="text-muted-foreground whitespace-pre-line">{product.serving_instructions}</p>
             </div>
           )}
 
