@@ -5,12 +5,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useCart } from "@/lib/store";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
+import { useCartWithProducts } from "@/lib/hooks/useCartWithProducts";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Loader2 } from "lucide-react";
 import { calculateTotalWeight, getShippingInfo } from "@/lib/shipping/mondial-relay-pricing";
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, getTotalPrice } = useCart();
+  const { items, updateQuantity, removeItem, getTotalPrice, isLoading, error } = useCartWithProducts();
   
   // Calcul dynamique du poids et du tarif de livraison (France par défaut)
   const totalWeight = calculateTotalWeight(items);
@@ -20,6 +20,38 @@ export default function CartPage() {
   const subtotal = getTotalPrice();
   const total = subtotal + shippingCost;
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container px-4 py-16">
+        <div className="max-w-2xl mx-auto text-center">
+          <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground">Chargement du panier...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="container px-4 py-16">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="bg-destructive/10 text-destructive rounded-lg p-6 mb-6">
+            <p className="font-medium">Erreur lors du chargement du panier</p>
+            <p className="text-sm mt-2">{error}</p>
+          </div>
+          <Link href="/">
+            <Button size="lg" className="gap-2">
+              Retour à la boutique <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty cart
   if (items.length === 0) {
     return (
       <div className="container px-4 py-16">

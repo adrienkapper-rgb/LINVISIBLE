@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/lib/store";
+import { useCartWithProducts } from "@/lib/hooks/useCartWithProducts";
 import { StripePayment } from "@/components/StripePayment";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Package, CreditCard, AlertCircle, Globe, Edit2, Save, Gift } from "lucide-react";
@@ -34,7 +35,8 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({ user }: CheckoutFormProps) {
   const router = useRouter();
-  const { items, getTotalPrice, clearCart } = useCart();
+  const { clearCart } = useCart();
+  const { items, getTotalPrice, isLoading, error } = useCartWithProducts();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -329,6 +331,31 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container px-4 py-16 text-center">
+        <p className="text-muted-foreground">Chargement...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="container px-4 py-16 text-center">
+        <div className="bg-destructive/10 text-destructive rounded-lg p-6 mb-6 max-w-2xl mx-auto">
+          <p className="font-medium">Erreur lors du chargement du panier</p>
+          <p className="text-sm mt-2">{error}</p>
+        </div>
+        <Link href="/">
+          <Button>Retour à la boutique</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // Empty cart
   if (items.length === 0) {
     return (
       <div className="container px-4 py-16 text-center">

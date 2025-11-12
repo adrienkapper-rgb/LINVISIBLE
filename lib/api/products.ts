@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/types'
-import { mapProductRowToDisplay } from '@/lib/utils/product'
+import { mapProductRowToDisplay, mapProductRowToCardData } from '@/lib/utils/product'
 import { cache } from 'react'
+import { ProductCardData } from '@/lib/types/product'
 
 export type Product = Database['public']['Tables']['products']['Row']
 
@@ -48,7 +49,7 @@ export async function trackProductEvent(
   sessionId?: string
 ) {
   const supabase = await createClient()
-  
+
   const { error } = await supabase
     .from('product_analytics')
     .insert({
@@ -57,7 +58,7 @@ export async function trackProductEvent(
       quantity,
       session_id: sessionId
     })
-  
+
   if (error) {
     console.error('Error tracking product event:', error)
   }

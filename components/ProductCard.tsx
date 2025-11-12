@@ -28,7 +28,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
 
   const handleAddToCart = () => {
-    addItem(product, quantity);
+    addItem(product.id, quantity);
     toast({
       title: "Ajouté au panier",
       description: `${quantity} x ${product.name} ${quantity > 1 ? 'ont' : 'a'} été ajouté${quantity > 1 ? 's' : ''} à votre panier`,

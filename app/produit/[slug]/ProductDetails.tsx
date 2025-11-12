@@ -110,7 +110,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
 
   const handleAddToCart = () => {
     const qty = getValidQuantity();
-    addItem(product, qty);
+    addItem(product.id, qty);
     toast({
       title: "Ajouté au panier",
       description: `${qty} x ${product.name} ajouté${qty > 1 ? 's' : ''} à votre panier`,
