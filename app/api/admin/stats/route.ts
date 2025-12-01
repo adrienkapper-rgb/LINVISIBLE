@@ -16,17 +16,22 @@ export async function GET(request: NextRequest) {
     { count: totalOrders },
     { count: totalUsers },
     { count: totalProducts },
-    { data: revenueData }
+    { data: revenueData },
+    { data: squareRevenueData }
   ] = await Promise.all([
     supabase.from('orders').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('products').select('*', { count: 'exact', head: true }),
     supabase.from('orders')
       .select('total')
-      .in('status', ['processing', 'shipped', 'delivered'])
+      .in('status', ['processing', 'shipped', 'delivered']),
+    supabase.from('square_transactions')
+      .select('amount_cents')
   ])
 
-  const totalRevenue = revenueData?.reduce((sum, order) => sum + Number(order.total), 0) || 0
+  const webRevenue = revenueData?.reduce((sum, order) => sum + Number(order.total), 0) || 0
+  const squareRevenue = squareRevenueData?.reduce((sum, t) => sum + (t.amount_cents || 0), 0) / 100 || 0
+  const totalRevenue = webRevenue + squareRevenue
 
   // Get recent orders
   const { data: recentOrders } = await supabase
@@ -64,8 +69,8 @@ export async function GET(request: NextRequest) {
     return acc
   }, {} as Record<string, { date: string; total: number; count: number }>) || {}
 
-  // Get top products
-  const { data: topProducts } = await supabase
+  // Get top products from web sales
+  const { data: webProducts } = await supabase
     .from('order_items')
     .select(`
       product_id,
@@ -73,23 +78,57 @@ export async function GET(request: NextRequest) {
       products!inner(image_url),
       quantity
     `)
-    .order('quantity', { ascending: false })
-    .limit(5)
 
-  // Aggregate product sales
-  const productSales = topProducts?.reduce((acc, item) => {
+  // Get top products from Square sales
+  const { data: squareProducts } = await supabase
+    .from('square_transactions')
+    .select(`
+      product_id,
+      quantity,
+      products!inner(name, image_url)
+    `)
+    .not('product_id', 'is', null)
+
+  // Aggregate product sales from both channels
+  const productSales: Record<string, any> = {}
+
+  // Web sales
+  webProducts?.forEach(item => {
     const key = item.product_id
-    if (!acc[key]) {
-      acc[key] = {
+    if (!productSales[key]) {
+      productSales[key] = {
         product_id: item.product_id,
         product_name: item.product_name,
         image_url: item.products?.image_url,
+        webQuantity: 0,
+        squareQuantity: 0,
         totalQuantity: 0
       }
     }
-    acc[key].totalQuantity += item.quantity
-    return acc
-  }, {} as Record<string, any>) || {}
+    productSales[key].webQuantity += item.quantity
+    productSales[key].totalQuantity += item.quantity
+  })
+
+  // Square sales
+  squareProducts?.forEach(item => {
+    const key = item.product_id
+    if (!productSales[key]) {
+      productSales[key] = {
+        product_id: item.product_id,
+        product_name: item.products?.name,
+        image_url: item.products?.image_url,
+        webQuantity: 0,
+        squareQuantity: 0,
+        totalQuantity: 0
+      }
+    }
+    productSales[key].squareQuantity += item.quantity
+    productSales[key].totalQuantity += item.quantity
+    // Update name if not set
+    if (!productSales[key].product_name) {
+      productSales[key].product_name = item.products?.name
+    }
+  })
 
   const topProductsList = Object.values(productSales)
     .sort((a, b) => b.totalQuantity - a.totalQuantity)
@@ -100,7 +139,9 @@ export async function GET(request: NextRequest) {
       totalOrders,
       totalUsers,
       totalProducts,
-      totalRevenue
+      totalRevenue,
+      webRevenue,
+      squareRevenue
     },
     recentOrders,
     ordersByStatus: statusCounts,

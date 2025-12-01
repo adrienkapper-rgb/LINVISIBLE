@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Euro, Package, ShoppingCart, Users, TrendingUp, AlertCircle } from 'lucide-react'
+import { Euro, Package, ShoppingCart, Users, TrendingUp, AlertCircle, Globe, Store } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import {
@@ -23,11 +23,20 @@ interface Stats {
     totalUsers: number
     totalProducts: number
     totalRevenue: number
+    webRevenue: number
+    squareRevenue: number
   }
   recentOrders: any[]
   ordersByStatus: Record<string, number>
   salesOverTime: { date: string; total: number; count: number }[]
-  topProducts: any[]
+  topProducts: {
+    product_id: string
+    product_name: string
+    image_url?: string
+    totalQuantity: number
+    webQuantity: number
+    squareQuantity: number
+  }[]
 }
 
 export default function AdminDashboard() {
@@ -118,9 +127,16 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">
               {stats.overview.totalRevenue.toFixed(2)} €
             </div>
-            <p className="text-xs text-muted-foreground">
-              +12% par rapport au mois dernier
-            </p>
+            <div className="flex gap-3 mt-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Globe className="h-3 w-3" />
+                Web: {stats.overview.webRevenue.toFixed(2)} €
+              </p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Store className="h-3 w-3" />
+                POS: {stats.overview.squareRevenue.toFixed(2)} €
+              </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -219,7 +235,7 @@ export default function AdminDashboard() {
         <CardHeader>
           <CardTitle>Produits les plus vendus</CardTitle>
           <CardDescription>
-            Top 5 des produits par quantité vendue
+            Top 5 des produits par quantité vendue (Web + Square POS)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -230,20 +246,33 @@ export default function AdminDashboard() {
                   {index + 1}
                 </div>
                 {product.image_url && (
-                  <img 
-                    src={product.image_url} 
+                  <img
+                    src={product.image_url}
                     alt={product.product_name}
                     className="w-10 h-10 object-cover rounded"
                   />
                 )}
                 <div className="flex-1">
                   <p className="font-medium">{product.product_name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {product.totalQuantity} unités vendues
-                  </p>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{product.totalQuantity} vendus</span>
+                    <span className="flex items-center gap-1">
+                      <Globe className="h-3 w-3" />
+                      {product.webQuantity}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Store className="h-3 w-3" />
+                      {product.squareQuantity}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
+            {stats.topProducts.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Aucune vente enregistrée
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
