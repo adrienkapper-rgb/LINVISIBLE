@@ -45,6 +45,7 @@ interface OrderData {
 interface OrderItem {
   id: string
   order_id: string
+  product_id?: string
   product_name: string
   product_price: number
   quantity: number
@@ -74,7 +75,7 @@ async function updateOrderStatus(orderId: string, status: string, paymentIntentI
 async function getOrderItems(orderId: string): Promise<OrderItem[]> {
   const { data: items, error } = await supabase
     .from('order_items')
-    .select('*')
+    .select('id, order_id, product_id, product_name, product_price, quantity, total')
     .eq('order_id', orderId)
 
   if (error) {
@@ -83,6 +84,44 @@ async function getOrderItems(orderId: string): Promise<OrderItem[]> {
   }
 
   return items || []
+}
+
+// Function to decrement stock for order items
+async function decrementStockForOrder(order: OrderData, orderItems: OrderItem[]) {
+  console.log(`📦 Décrément du stock pour commande ${order.order_number}`)
+
+  for (const item of orderItems) {
+    if (item.product_id) {
+      // Décrémenter le stock via la fonction RPC
+      const { error: rpcError } = await supabase.rpc('decrement_stock', {
+        p_product_id: item.product_id,
+        p_quantity: item.quantity
+      })
+
+      if (rpcError) {
+        console.error(`❌ Erreur décrément stock pour ${item.product_name}:`, rpcError)
+        continue
+      }
+
+      // Créer le mouvement de stock
+      const { error: movementError } = await supabase
+        .from('stock_movements')
+        .insert({
+          product_id: item.product_id,
+          movement_type: 'web_sale',
+          quantity: -item.quantity,
+          reference_type: 'order',
+          reference_id: order.id,
+          notes: `Vente web: ${order.order_number}`
+        })
+
+      if (movementError) {
+        console.error(`❌ Erreur création mouvement stock pour ${item.product_name}:`, movementError)
+      } else {
+        console.log(`✅ Stock décrémenté: ${item.product_name} x${item.quantity}`)
+      }
+    }
+  }
 }
 
 // Function to call Supabase Edge Function for order confirmation email
@@ -215,6 +254,14 @@ async function processSuccessfulPayment(order: OrderData, paymentIntent: Stripe.
       console.log(`📧 Email admin traité pour commande ${order.order_number}`)
     } catch (emailError) {
       console.error('⚠️ Erreur envoi email admin:', emailError)
+    }
+
+    // Décrémenter le stock automatiquement
+    try {
+      await decrementStockForOrder(order, orderItems)
+      console.log(`📦 Stock décrémenté pour commande ${order.order_number}`)
+    } catch (stockError) {
+      console.error('⚠️ Erreur décrément stock:', stockError)
     }
 
     console.log(`✅ Paiement traité avec succès pour commande ${order.order_number}`)

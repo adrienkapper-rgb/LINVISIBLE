@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_page_content: {
+        Row: {
+          content_key: string
+          content_value: string
+          id: string
+          language: string
+          section_key: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          content_key: string
+          content_value: string
+          id?: string
+          language?: string
+          section_key: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          content_key?: string
+          content_value?: string
+          id?: string
+          language?: string
+          section_key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -47,6 +77,27 @@ export type Database = {
           status?: string | null
           subject?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      interface_settings: {
+        Row: {
+          hero_image_url: string
+          id: number
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          hero_image_url: string
+          id?: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          hero_image_url?: string
+          id?: number
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -109,10 +160,13 @@ export type Database = {
           email: string
           first_name: string
           id: string
+          is_gift: boolean | null
           last_name: string
           mondial_relay_point: string | null
           order_number: string
           phone: string
+          recipient_first_name: string | null
+          recipient_last_name: string | null
           shipping_cost: number
           status: string | null
           stripe_payment_intent_id: string | null
@@ -130,10 +184,13 @@ export type Database = {
           email: string
           first_name: string
           id?: string
+          is_gift?: boolean | null
           last_name: string
           mondial_relay_point?: string | null
           order_number: string
           phone: string
+          recipient_first_name?: string | null
+          recipient_last_name?: string | null
           shipping_cost: number
           status?: string | null
           stripe_payment_intent_id?: string | null
@@ -151,10 +208,13 @@ export type Database = {
           email?: string
           first_name?: string
           id?: string
+          is_gift?: boolean | null
           last_name?: string
           mondial_relay_point?: string | null
           order_number?: string
           phone?: string
+          recipient_first_name?: string | null
+          recipient_last_name?: string | null
           shipping_cost?: number
           status?: string | null
           stripe_payment_intent_id?: string | null
@@ -246,6 +306,75 @@ export type Database = {
           },
         ]
       }
+      production_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          quantity_for_sale: number
+          quantity_internal: number
+          quantity_produced: number
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          quantity_for_sale: number
+          quantity_internal: number
+          quantity_produced: number
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          quantity_for_sale?: number
+          quantity_internal?: number
+          quantity_produced?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "production_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_sessions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          notes: string | null
+          session_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          session_date: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          session_date?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           alcohol: number
@@ -255,12 +384,14 @@ export type Database = {
           id: string
           image_url: string | null
           ingredients: string[] | null
+          low_stock_threshold: number | null
           name: string
           numero: number
           price: number
           serving_instructions: string | null
           serving_size: string | null
           slug: string
+          stock_internal: number | null
           stock_quantity: number | null
           updated_at: string | null
           volume: string
@@ -274,12 +405,14 @@ export type Database = {
           id?: string
           image_url?: string | null
           ingredients?: string[] | null
+          low_stock_threshold?: number | null
           name: string
-          numero?: number
+          numero: number
           price: number
           serving_instructions?: string | null
           serving_size?: string | null
           slug: string
+          stock_internal?: number | null
           stock_quantity?: number | null
           updated_at?: string | null
           volume: string
@@ -293,11 +426,14 @@ export type Database = {
           id?: string
           image_url?: string | null
           ingredients?: string[] | null
+          low_stock_threshold?: number | null
           name?: string
+          numero?: number
           price?: number
           serving_instructions?: string | null
           serving_size?: string | null
           slug?: string
+          stock_internal?: number | null
           stock_quantity?: number | null
           updated_at?: string | null
           volume?: string
@@ -359,15 +495,147 @@ export type Database = {
         }
         Relationships: []
       }
+      square_product_mapping: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          square_catalog_id: string
+          square_product_name: string | null
+          square_variation_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          square_catalog_id: string
+          square_product_name?: string | null
+          square_variation_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          square_catalog_id?: string
+          square_product_name?: string | null
+          square_variation_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "square_product_mapping_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      square_transactions: {
+        Row: {
+          amount_cents: number
+          id: string
+          line_item_uid: string | null
+          location_name: string | null
+          processed: boolean | null
+          product_id: string | null
+          quantity: number
+          square_catalog_id: string | null
+          square_order_id: string | null
+          square_transaction_id: string
+          synced_at: string | null
+          transaction_date: string
+        }
+        Insert: {
+          amount_cents: number
+          id?: string
+          line_item_uid?: string | null
+          location_name?: string | null
+          processed?: boolean | null
+          product_id?: string | null
+          quantity: number
+          square_catalog_id?: string | null
+          square_order_id?: string | null
+          square_transaction_id: string
+          synced_at?: string | null
+          transaction_date: string
+        }
+        Update: {
+          amount_cents?: number
+          id?: string
+          line_item_uid?: string | null
+          location_name?: string | null
+          processed?: boolean | null
+          product_id?: string | null
+          quantity?: number
+          square_catalog_id?: string | null
+          square_order_id?: string | null
+          square_transaction_id?: string
+          synced_at?: string | null
+          transaction_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "square_transactions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          movement_type: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          movement_type: string
+          notes?: string | null
+          product_id: string
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          movement_type?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      cleanup_expired_pending_orders: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_pending_orders: { Args: never; Returns: undefined }
       create_user_profile: {
         Args: {
           account_type?: string
@@ -385,9 +653,10 @@ export type Database = {
         }
         Returns: undefined
       }
-      is_admin: {
-        Args: { user_id: string }
-        Returns: boolean
+      is_admin: { Args: { user_id: string }; Returns: boolean }
+      recalculate_product_stock: {
+        Args: { p_product_id: string }
+        Returns: undefined
       }
     }
     Enums: {

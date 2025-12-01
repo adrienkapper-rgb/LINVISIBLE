@@ -12,7 +12,9 @@ import {
   Settings,
   LogOut,
   Home,
-  Palette
+  Palette,
+  Factory,
+  Store
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -35,6 +37,16 @@ const menuItems = [
     title: 'Produits',
     href: '/admin/products',
     icon: Package
+  },
+  {
+    title: 'Fabrication',
+    href: '/admin/fabrication',
+    icon: Factory
+  },
+  {
+    title: 'Square POS',
+    href: '/admin/square',
+    icon: Store
   },
   {
     title: 'Utilisateurs',
