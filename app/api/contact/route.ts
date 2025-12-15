@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 
-// Lazy initialization to avoid build errors when env var is missing
-let resend: Resend | null = null;
-function getResend() {
-  if (!resend && process.env.RESEND_API_KEY) {
-    resend = new Resend(process.env.RESEND_API_KEY);
-  }
-  return resend;
-}
-const adminEmail = process.env.ADMIN_EMAIL || "adrienkapper@gmail.com";
+// Emails are sent via Supabase Edge Functions (database triggers)
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,10 +15,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save message to database FIRST (before sending emails)
+    // Save message to database - Supabase Edge Functions will handle email sending
     const supabase = await createClient();
-    console.log("Tentative d'enregistrement en base pour:", { name, email, subject });
-    
+
     const { data: contactMessage, error: dbError } = await supabase
       .from('contact_messages')
       .insert({
@@ -42,92 +32,19 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (dbError) {
-      console.error("ERREUR Supabase:", dbError);
-      console.log("Continuing with email sending despite DB error...");
-      // Continue with email sending even if DB insert fails (fallback mode)
-    }
-
-    console.log("Message enregistré avec succès:", contactMessage);
-
-    const phoneInfo = phone ? `\nTéléphone: ${phone}` : "";
-    
-    const emailContent = `
-      <h2>Nouveau message de contact</h2>
-      <p><strong>De:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      ${phone ? `<p><strong>Téléphone:</strong> ${phone}</p>` : ""}
-      <p><strong>Objet:</strong> ${subject}</p>
-      <br/>
-      <p><strong>Message:</strong></p>
-      <p>${message.replace(/\n/g, "<br/>")}</p>
-    `;
-
-    const textContent = `
-Nouveau message de contact
-
-De: ${name}
-Email: ${email}${phoneInfo}
-Objet: ${subject}
-
-Message:
-${message}
-    `;
-
-    const resendClient = getResend();
-    if (!resendClient) {
-      console.error("RESEND_API_KEY not configured");
+      console.error("Erreur Supabase:", dbError);
       return NextResponse.json(
-        { error: "Service d'email non configuré" },
+        { error: "Erreur lors de l'enregistrement du message" },
         { status: 500 }
       );
     }
 
-    await resendClient.emails.send({
-      from: "L'invisible <onboarding@resend.dev>",
-      to: adminEmail,
-      replyTo: email,
-      subject: `[Contact] ${subject}`,
-      html: emailContent,
-      text: textContent,
-    });
-
-    await resendClient.emails.send({
-      from: "L'invisible <onboarding@resend.dev>",
-      to: email,
-      subject: "Confirmation de votre message - L'invisible",
-      html: `
-        <h2>Merci pour votre message</h2>
-        <p>Bonjour ${name},</p>
-        <p>Nous avons bien reçu votre message et nous vous répondrons dans les plus brefs délais.</p>
-        <br/>
-        <p><strong>Rappel de votre message:</strong></p>
-        <p><strong>Objet:</strong> ${subject}</p>
-        <p>${message.replace(/\n/g, "<br/>")}</p>
-        <br/>
-        <p>Cordialement,<br/>L'équipe L'invisible</p>
-      `,
-      text: `
-Merci pour votre message
-
-Bonjour ${name},
-
-Nous avons bien reçu votre message et nous vous répondrons dans les plus brefs délais.
-
-Rappel de votre message:
-Objet: ${subject}
-${message}
-
-Cordialement,
-L'équipe L'invisible
-      `,
-    });
-
     return NextResponse.json(
-      { message: "Message envoyé avec succès" },
+      { message: "Message envoyé avec succès", id: contactMessage?.id },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Erreur lors de l'envoi de l'email:", error);
+    console.error("Erreur lors du traitement du message:", error);
     return NextResponse.json(
       { error: "Erreur lors de l'envoi du message" },
       { status: 500 }
