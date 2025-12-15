@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: "Message envoyé avec succès", id: contactMessage?.id },
+      { message: "Message envoyé avec succès" },
       { status: 200 }
     );
   } catch (error) {
