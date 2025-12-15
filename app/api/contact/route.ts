@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build errors when env var is missing
+let resend: Resend | null = null;
+function getResend() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 const adminEmail = process.env.ADMIN_EMAIL || "adrienkapper@gmail.com";
 
 export async function POST(request: NextRequest) {
@@ -66,7 +73,16 @@ Message:
 ${message}
     `;
 
-    await resend.emails.send({
+    const resendClient = getResend();
+    if (!resendClient) {
+      console.error("RESEND_API_KEY not configured");
+      return NextResponse.json(
+        { error: "Service d'email non configuré" },
+        { status: 500 }
+      );
+    }
+
+    await resendClient.emails.send({
       from: "L'invisible <onboarding@resend.dev>",
       to: adminEmail,
       replyTo: email,
@@ -75,7 +91,7 @@ ${message}
       text: textContent,
     });
 
-    await resend.emails.send({
+    await resendClient.emails.send({
       from: "L'invisible <onboarding@resend.dev>",
       to: email,
       subject: "Confirmation de votre message - L'invisible",
