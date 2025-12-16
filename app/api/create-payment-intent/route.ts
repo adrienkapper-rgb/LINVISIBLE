@@ -132,6 +132,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Décrémenter le stock et créer les mouvements pour chaque article
+    for (const item of items as { productId: string; quantity: number }[]) {
+      // 1. Récupérer le stock actuel
+      const { data: product } = await supabase
+        .from('products')
+        .select('stock_quantity')
+        .eq('id', item.productId)
+        .single()
+
+      if (product) {
+        // 2. Décrémenter le stock
+        const newStock = ((product as { stock_quantity: number }).stock_quantity || 0) - item.quantity
+        await supabase
+          .from('products')
+          .update({ stock_quantity: newStock } as never)
+          .eq('id', item.productId)
+
+        // 3. Créer le mouvement de stock pour traçabilité
+        await supabase
+          .from('stock_movements')
+          .insert({
+            product_id: item.productId,
+            movement_type: 'web_sale',
+            quantity: -item.quantity,
+            reference_type: 'order',
+            reference_id: typedOrder.id,
+            notes: `Commande web ${orderNumber}`
+          } as never)
+      }
+    }
+
     // Créer le PaymentIntent Stripe avec référence à la commande
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100), // Stripe utilise les centimes
