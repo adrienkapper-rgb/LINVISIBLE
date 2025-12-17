@@ -80,6 +80,50 @@ export type Database = {
         }
         Relationships: []
       }
+      discount_codes: {
+        Row: {
+          amount: number
+          code: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          used: boolean | null
+          used_at: string | null
+          used_by_order_id: string | null
+        }
+        Insert: {
+          amount: number
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          used_by_order_id?: string | null
+        }
+        Update: {
+          amount?: number
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          used_by_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_codes_used_by_order_id_fkey"
+            columns: ["used_by_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       general_expenses: {
         Row: {
           amount: number
@@ -225,6 +269,8 @@ export type Database = {
           delivery_country: string | null
           delivery_postal_code: string | null
           delivery_type: string | null
+          discount_amount: number | null
+          discount_code: string | null
           email: string
           first_name: string
           id: string
@@ -250,6 +296,8 @@ export type Database = {
           delivery_country?: string | null
           delivery_postal_code?: string | null
           delivery_type?: string | null
+          discount_amount?: number | null
+          discount_code?: string | null
           email: string
           first_name: string
           id?: string
@@ -275,6 +323,8 @@ export type Database = {
           delivery_country?: string | null
           delivery_postal_code?: string | null
           delivery_type?: string | null
+          discount_amount?: number | null
+          discount_code?: string | null
           email?: string
           first_name?: string
           id?: string
@@ -421,8 +471,6 @@ export type Database = {
           created_at: string | null
           id: string
           product_id: string
-          quantity_for_sale: number
-          quantity_internal: number
           quantity_produced: number
           session_id: string
         }
@@ -430,8 +478,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           product_id: string
-          quantity_for_sale: number
-          quantity_internal: number
           quantity_produced: number
           session_id: string
         }
@@ -439,8 +485,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           product_id?: string
-          quantity_for_sale?: number
-          quantity_internal?: number
           quantity_produced?: number
           session_id?: string
         }

@@ -13,7 +13,7 @@ import { useCart } from "@/lib/store";
 import { useCartWithProducts } from "@/lib/hooks/useCartWithProducts";
 import { StripePayment } from "@/components/StripePayment";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Package, CreditCard, AlertCircle, Globe, Edit2, Save, Gift } from "lucide-react";
+import { MapPin, Package, CreditCard, AlertCircle, Globe, Edit2, Save, Gift, Tag, Loader2, Check, X } from "lucide-react";
 import { saveUserInfo } from "@/app/actions/user";
 import { MondialRelayWidget } from "@/components/MondialRelayWidget";
 import { calculateTotalWeight, getShippingInfo, validatePackageWeight, SUPPORTED_COUNTRIES, getAvailableServices } from "@/lib/shipping/mondial-relay-pricing";
@@ -72,6 +72,13 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
     country: "FR",
   });
 
+  // États pour le code promo
+  const [discountCodeInput, setDiscountCodeInput] = useState("");
+  const [discountCode, setDiscountCode] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountError, setDiscountError] = useState<string | null>(null);
+
   // Mettre à jour automatiquement les champs avec les données utilisateur
   useEffect(() => {
     setFormData(prevData => ({
@@ -114,7 +121,56 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
   const shippingInfo = getShippingInfo(totalWeight, effectiveCountry, preferPointRelais && availableServices.pointRelais);
   const shippingCost = shippingInfo.cost;
   const subtotal = getTotalPrice();
-  const total = subtotal + shippingCost;
+  const total = Math.max(0, subtotal + shippingCost - discountAmount); // Ne pas aller en négatif
+
+  // Fonction pour appliquer un code promo
+  const handleApplyDiscount = async () => {
+    if (!discountCodeInput.trim()) {
+      setDiscountError("Veuillez entrer un code");
+      return;
+    }
+
+    setDiscountLoading(true);
+    setDiscountError(null);
+
+    try {
+      const response = await fetch("/api/validate-discount-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: discountCodeInput.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (data.valid) {
+        setDiscountCode(data.code);
+        setDiscountAmount(data.amount);
+        setDiscountError(null);
+        toast({
+          title: "Code promo appliqué",
+          description: `Réduction de ${data.amount.toFixed(2)}€`,
+        });
+      } else {
+        setDiscountError(data.error || "Code invalide");
+        setDiscountCode(null);
+        setDiscountAmount(0);
+      }
+    } catch (error) {
+      setDiscountError("Erreur lors de la validation");
+      setDiscountCode(null);
+      setDiscountAmount(0);
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  // Fonction pour retirer le code promo
+  const handleRemoveDiscount = () => {
+    setDiscountCode(null);
+    setDiscountAmount(0);
+    setDiscountCodeInput("");
+    setDiscountError(null);
+  };
   
   // Validation du poids pour le pays sélectionné
   const weightValidation = validatePackageWeight(totalWeight, effectiveCountry);
@@ -819,7 +875,69 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                 </div>
                 
                 <Separator />
-                
+
+                {/* Code promo */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Tag className="h-4 w-4" />
+                    Code promo
+                  </Label>
+                  {discountCode ? (
+                    <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
+                      <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                        <Check className="h-4 w-4" />
+                        <span className="text-sm font-medium">{discountCode}</span>
+                        <span className="text-sm">(-{discountAmount.toFixed(2)}€)</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveDiscount}
+                        className="h-6 w-6 p-0 text-green-700 hover:text-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Entrez votre code"
+                        value={discountCodeInput}
+                        onChange={(e) => {
+                          setDiscountCodeInput(e.target.value.toUpperCase());
+                          setDiscountError(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleApplyDiscount();
+                          }
+                        }}
+                        className="flex-1"
+                        disabled={discountLoading}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleApplyDiscount}
+                        disabled={discountLoading || !discountCodeInput.trim()}
+                      >
+                        {discountLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Appliquer"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                  {discountError && (
+                    <p className="text-sm text-red-500">{discountError}</p>
+                  )}
+                </div>
+
+                <Separator />
+
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Sous-total</span>
@@ -827,16 +945,22 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                   </div>
                   <div className="flex justify-between">
                     <span>
-                      {shippingInfo.service === 'point-relais' 
-                        ? `Point Relais (${shippingInfo.formattedWeight})` 
+                      {shippingInfo.service === 'point-relais'
+                        ? `Point Relais (${shippingInfo.formattedWeight})`
                         : `Livraison à domicile (${shippingInfo.formattedWeight})`}
                     </span>
                     <span>{shippingCost.toFixed(2)}€</span>
                   </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Réduction ({discountCode})</span>
+                      <span>-{discountAmount.toFixed(2)}€</span>
+                    </div>
+                  )}
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total TTC</span>
                   <span>{total.toFixed(2)}€</span>
@@ -871,7 +995,10 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
                       // Informations cadeau
                       isGift,
                       recipientFirstName: isGift ? recipientData.firstName : undefined,
-                      recipientLastName: isGift ? recipientData.lastName : undefined
+                      recipientLastName: isGift ? recipientData.lastName : undefined,
+                      // Code promo
+                      discountCode: discountCode || undefined,
+                      discountAmount: discountAmount || undefined
                     }}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}

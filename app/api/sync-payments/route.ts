@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
-import { updateOrderStatus, getOrderItems } from '@/lib/api/orders'
+import { updateOrderStatus } from '@/lib/api/orders'
 import type { OrderRow } from '@/lib/supabase/typed-client'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -63,9 +63,9 @@ export async function POST(request: NextRequest) {
             console.log(`✅ Synchronisation nécessaire pour ${order.order_number}`)
             
             if (mode === 'sync') {
-              // Mettre à jour le statut de la commande
+              // Mettre à jour le statut de la commande (gère automatiquement les mouvements de stock)
               await updateOrderStatus(order.id, 'processing', paymentIntent.id)
-              
+
               // Créer ou mettre à jour l'enregistrement de paiement
               const paymentData = {
                 order_id: order.id,
@@ -86,10 +86,10 @@ export async function POST(request: NextRequest) {
                   .from('payments')
                   .insert(paymentData as never)
               }
-              
+
               // Les emails seront envoyés par le webhook Stripe via Edge Functions
               console.log(`📧 Emails gérés par le webhook Stripe pour ${order.order_number}`)
-              
+
               results.synchronized++
               console.log(`✅ Commande ${order.order_number} synchronisée`)
             } else {

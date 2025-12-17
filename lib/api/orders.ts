@@ -131,21 +131,6 @@ export async function updateOrderStatus(
 ): Promise<{ success: boolean, error: unknown }> {
   const supabase = await createClient()
 
-  // Get the current order before updating
-  const { data: currentOrder, error: fetchError } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('id', orderId)
-    .single()
-
-  if (fetchError) {
-    console.error('Error fetching order:', fetchError)
-    return { success: false, error: fetchError }
-  }
-
-  const typedCurrentOrder = currentOrder as OrderRow
-  const previousStatus = typedCurrentOrder.status
-
   const updateData: Partial<OrderUpdate> = { status }
   if (stripePaymentIntentId) {
     updateData.stripe_payment_intent_id = stripePaymentIntentId
@@ -161,19 +146,9 @@ export async function updateOrderStatus(
     return { success: false, error }
   }
 
-  // Status change logged - emails are handled by Stripe webhook via Edge Functions
-  if (previousStatus !== status) {
-    console.log(`📋 Statut de commande ${typedCurrentOrder.order_number} changé: ${previousStatus} → ${status}`)
-    
-    if (status === 'processing') {
-      console.log(`💳 Commande payée - les emails seront envoyés par le webhook Stripe via Edge Functions`)
-    } else if (status === 'shipped') {
-      console.log(`📦 Commande expédiée - notification à implémenter si nécessaire`)
-    } else if (status === 'delivered') {
-      console.log(`✅ Commande livrée - notification à implémenter si nécessaire`)
-    }
-  }
-  
+  // Les mouvements de stock sont gérés automatiquement par le trigger Supabase
+  // handle_order_status_change() qui se déclenche sur UPDATE de status
+
   return { success: true, error: null }
 }
 
@@ -242,16 +217,19 @@ export async function getOrderByNumber(orderNumber: string, maxRetries = 5): Pro
 
 export async function getOrderItems(orderId: string): Promise<OrderItem[]> {
   const supabase = await createClient()
-  
+
   const { data, error } = await supabase
     .from('order_items')
     .select('*')
     .eq('order_id', orderId)
-  
+
   if (error) {
     console.error('Error fetching order items:', error)
     return []
   }
-  
+
   return data || []
 }
+
+// NOTE: Les mouvements de stock sont gérés automatiquement par le trigger Supabase
+// handle_order_status_change() qui se déclenche lors du changement de statut de commande

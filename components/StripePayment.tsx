@@ -111,6 +111,9 @@ interface StripePaymentProps {
     isGift?: boolean;
     recipientFirstName?: string;
     recipientLastName?: string;
+    // Champs pour les codes promo
+    discountCode?: string;
+    discountAmount?: number;
   };
   onSuccess: (orderNumber: string) => void;
   onError: (error: string) => void;

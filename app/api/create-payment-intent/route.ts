@@ -33,7 +33,10 @@ export async function POST(request: NextRequest) {
       // Champs pour les cadeaux
       isGift,
       recipientFirstName,
-      recipientLastName
+      recipientLastName,
+      // Champs pour les codes promo
+      discountCode,
+      discountAmount
     } = body
     
     // Validation des données requises
@@ -66,6 +69,43 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // Valider le code promo côté serveur si fourni
+    let validatedDiscountCode: string | null = null;
+    let validatedDiscountAmount = 0;
+    let discountCodeId: string | null = null;
+
+    if (discountCode && typeof discountCode === 'string') {
+      const { data: codeData, error: codeError } = await supabase
+        .from('discount_codes')
+        .select('id, code, amount, used')
+        .ilike('code', discountCode.trim())
+        .single()
+
+      const typedCodeData = codeData as { id: string; code: string; amount: number; used: boolean | null } | null
+
+      if (codeError || !typedCodeData) {
+        return NextResponse.json(
+          { error: 'Code promo invalide' },
+          { status: 400 }
+        )
+      }
+
+      if (typedCodeData.used) {
+        return NextResponse.json(
+          { error: 'Ce code promo a déjà été utilisé' },
+          { status: 400 }
+        )
+      }
+
+      // Code valide, on l'utilise
+      validatedDiscountCode = typedCodeData.code;
+      validatedDiscountAmount = Number(typedCodeData.amount);
+      discountCodeId = typedCodeData.id;
+    }
+
+    // Recalculer le total avec la réduction validée
+    const finalTotal = Math.max(0, Number(subtotal) + Number(shippingCost) - validatedDiscountAmount)
+
     // Générer un numéro de commande unique
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
     
@@ -86,12 +126,15 @@ export async function POST(request: NextRequest) {
         delivery_country: deliveryCountry || 'FR',
         subtotal: Number(subtotal),
         shipping_cost: Number(shippingCost),
-        total: Number(total),
+        total: finalTotal,
         status: 'pending',
         // Champs pour les cadeaux
         is_gift: isGift || false,
         recipient_first_name: recipientFirstName || null,
-        recipient_last_name: recipientLastName || null
+        recipient_last_name: recipientLastName || null,
+        // Champs pour les codes promo
+        discount_code: validatedDiscountCode,
+        discount_amount: validatedDiscountAmount
       } as never)
       .select()
       .single()
@@ -132,40 +175,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Décrémenter le stock et créer les mouvements pour chaque article
-    for (const item of items as { productId: string; quantity: number }[]) {
-      // 1. Récupérer le stock actuel
-      const { data: product } = await supabase
-        .from('products')
-        .select('stock_quantity')
-        .eq('id', item.productId)
-        .single()
+    // Marquer le code promo comme utilisé (si applicable)
+    if (discountCodeId && validatedDiscountCode) {
+      const { error: updateCodeError } = await supabase
+        .from('discount_codes')
+        .update({
+          used: true,
+          used_by_order_id: typedOrder.id,
+          used_at: new Date().toISOString()
+        } as never)
+        .eq('id', discountCodeId)
 
-      if (product) {
-        // 2. Décrémenter le stock
-        const newStock = ((product as { stock_quantity: number }).stock_quantity || 0) - item.quantity
-        await supabase
-          .from('products')
-          .update({ stock_quantity: newStock } as never)
-          .eq('id', item.productId)
-
-        // 3. Créer le mouvement de stock pour traçabilité
-        await supabase
-          .from('stock_movements')
-          .insert({
-            product_id: item.productId,
-            movement_type: 'web_sale',
-            quantity: -item.quantity,
-            reference_type: 'order',
-            reference_id: typedOrder.id,
-            notes: `Commande web ${orderNumber}`
-          } as never)
+      if (updateCodeError) {
+        console.error('⚠️ Erreur mise à jour code promo:', updateCodeError)
+        // On ne fait pas échouer la commande pour ça, mais on log l'erreur
+      } else {
+        console.log(`✅ Code promo ${validatedDiscountCode} marqué comme utilisé`)
       }
     }
 
+    // NOTE: Le stock sera décrémenté et les mouvements créés UNIQUEMENT après
+    // confirmation du paiement via le webhook Stripe ou sync-payments
+    // Cela évite de bloquer du stock pour des commandes non payées
+
     // Créer le PaymentIntent Stripe avec référence à la commande
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(total * 100), // Stripe utilise les centimes
+      amount: Math.round(finalTotal * 100), // Stripe utilise les centimes
       currency: 'eur',
       description: `Commande ${orderNumber} - L'invisible`,
       receipt_email: email,
@@ -175,7 +210,9 @@ export async function POST(request: NextRequest) {
         email,
         firstName,
         lastName,
-        phone
+        phone,
+        discount_code: validatedDiscountCode || '',
+        discount_amount: validatedDiscountAmount.toString()
       }
     })
 
