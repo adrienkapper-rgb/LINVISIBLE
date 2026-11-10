@@ -10,8 +10,9 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60,
+    formats: ['image/webp'],
+    // 30 jours : les photos changent rarement ; 60 s faisait retransformer chaque image à chaque visite.
+    minimumCacheTTL: 2592000,
   },
   compress: true,
   poweredByHeader: false,
